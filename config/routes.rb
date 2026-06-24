@@ -1,4 +1,16 @@
 Rails.application.routes.draw do
+  # Устанавливаем VideosController и его метод index в качестве главной страницы сайта
+  root "videos#index"
+
+  # Маршрут для отправки формы добавления канала
+  post "add_channel" => "videos#create_channel", as: :add_channel
+
+  # Новый маршрут для страницы конкретного канала
+  get "channels/:id" => "videos#show_channel", as: :channel_page
+
+  # Новый маршрут для просмотра конкретного видео
+  get "videos/:id" => "videos#show", as: :watch_video
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

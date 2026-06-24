@@ -10,19 +10,54 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body style="margin: 0; padding: 0; background-color: #f9f9f9;">
+    
+    <!-- Главный контейнер, делящий экран на лево и право -->
+    <div style="display: flex; font-family: sans-serif; min-height: 100vh;">
+      
+      <!-- ЛЕВАЯ ПАНЕЛЬ: САЙДБАР (фиксированный слева) -->
+      <aside style="width: 260px; background: #ffffff; border-right: 1px solid #e5e5e5; padding: 20px; box-sizing: border-box; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
+        <div style="margin-bottom: 30px;">
+          <a href="<%= root_path %>" style="text-decoration: none; color: #ff0000; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+            📺 NewPipe Rails
+          </a>
+        </div>
+
+        <h3 style="font-size: 0.85rem; color: #606060; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;">Мои подписки</h3>
+        
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <!-- Ссылка на общую ленту -->
+          <li style="margin-bottom: 8px;">
+            <a href="<%= root_path %>" style="display: block; padding: 10px 12px; border-radius: 8px; color: #0f0f0f; text-decoration: none; font-weight: bold; background: #f2f2f2;">
+              🏠 Общая лента
+            </a>
+          </li>
+
+          <!-- Список каналов из базы данных -->
+          <% @sidebar_channels.each do |channel| %>
+            <li style="margin-bottom: 4px;">
+              <a href="<%= channel_page_path(channel) %>" style="display: block; padding: 10px 12px; border-radius: 8px; color: #0f0f0f; text-decoration: none; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: background 0.2s;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='transparent'">
+                🔴 <%= channel.title %>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </aside>
+
+      <!-- ПРАВАЯ ПАНЕЛЬ: ОСНОВНОЙ КОНТЕНТ (Сюда подставляются вьюшки) -->
+      <main style="flex-grow: 1; padding: 40px; box-sizing: border-box; overflow-x: hidden;">
+        <%= yield %>
+      </main>
+
+    </div>
+
   </body>
 </html>

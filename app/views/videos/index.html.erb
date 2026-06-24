@@ -1,0 +1,62 @@
+<div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px;">
+
+    <!-- Блок уведомлений -->
+  <% if flash[:notice] %>
+    <div style="background: #e1f5fe; color: #0288d1; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;">
+      <%= flash[:notice] %>
+    </div>
+  <% end %>
+  <% if flash[:alert] %>
+    <div style="background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;">
+      <%= flash[:alert] %>
+    </div>
+  <% end %>
+
+  <!-- Форма добавления нового канала -->
+  <div style="background: #f9f9f9; padding: 20px; border-radius: 12px; margin-bottom: 40px; border: 1px solid #e0e0e0; display: flex; width: 100%; box-sizing: border-box;">
+  <%= form_with url: add_channel_path, method: :post, local: true, style: "display: flex; gap: 10px; width: 100%;" do |f| %>
+    <%= f.text_field :youtube_channel_id, placeholder: "Вставь ID канала (например, UCC492BS_DUo3ScrXgUPJDew)", style: "flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; min-width: 0;" %>
+    <%= f.submit "Добавить", style: "background: #ff0000; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap;" %>
+  <% end %>
+  </div>
+
+
+
+  <!-- Сетка для видеороликов -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+    <% @videos.each do |video| %>
+      <div style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        
+        <!-- Ссылка на плеер вокруг картинки -->
+        <a href="<%= watch_video_path(video) %>">
+          <% if video.thumbnail_url.present? %>
+            <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+          <% else %>
+            <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
+          <% end %>
+        </a>
+
+        <div style="padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <!-- Ссылка на плеер вокруг названия -->
+            <h3 style="margin: 0 0 8px 0; font-size: 1rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+              <a href="<%= watch_video_path(video) %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
+                <%= video.title %>
+              </a>
+            </h3>
+            <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold;">
+              <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
+                <%= video.channel.title %>
+              </a>
+            </p>
+          </div>
+          
+          <div style="margin-top: 12px; font-size: 0.8rem; color: #909090;">
+            Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
+          </div>
+        </div>
+        
+      </div>
+    <% end %>
+  </div>
+</div>
