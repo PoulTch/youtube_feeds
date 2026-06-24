@@ -39,4 +39,17 @@ class VideosController < ApplicationController
   def show
     @video = Video.find(params[:id])
   end
+
+  # Метод вызывается из JS в фоне
+  def save_progress
+    video = Video.find(params[:id])
+
+    # Обновляем колонки в базе данных
+    video.update(
+      watched_seconds: params[:current_time],
+      duration_seconds: params[:total_time]
+    )
+
+    head :ok # Отвечаем браузеру, что всё прошло успешно
+  end
 end
