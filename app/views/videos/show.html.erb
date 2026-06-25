@@ -1,17 +1,16 @@
-<div data-controller="video-player" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 900px; margin: 0 auto;">
+<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" style="font-family: sans-serif; max-width: 900px; margin: 0 auto;">
   
-  <!-- Адаптивный контейнер для плеера (сохраняет пропорции 16:9) -->
   <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background: #000;">
+    <!-- Айфрейм без лишних JS-зависимостей, только чистый старт -->
     <iframe 
       id="youtube-player"
-      src="https://www.youtube.com/embed/<%= @video.youtube_video_id %>?autoplay=1&rel=0&enablejsapi=1&start=<%= @video.watched_seconds || 0 %>" 
+      src="" 
       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" 
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
       allowfullscreen>
     </iframe>
   </div>
 
-  <!-- Информация о видео под плеером -->
   <h1 style="font-size: 1.6rem; color: #0f0f0f; margin-top: 24px; margin-bottom: 8px; line-height: 1.4;">
     <%= @video.title %>
   </h1>
@@ -25,11 +24,21 @@
     </span>
   </div>
 
-  <!-- Описание видео -->
   <% if @video.description.present? %>
     <div style="background: #f2f2f2; padding: 20px; border-radius: 12px; font-size: 0.95rem; color: #0f0f0f; line-height: 1.6; white-space: pre-wrap;">
       <%= @video.description %>
     </div>
   <% end %>
+
+  <!-- Магический встроенный скрипт: вытаскивает время из Оперы до загрузки плеера -->
+  <script>
+    (function() {
+      const videoId = "<%= @video.youtube_video_id %>";
+      const savedTime = localStorage.getItem(videoId) || 0;
+      const iframe = document.getElementById("youtube-player");
+      // Формируем чистую ссылку со временем старта и подставляем в плеер
+      iframe.src = "https://youtube.com/embed/" + videoId + "?autoplay=1&rel=0&enablejsapi=1&widgetid=1&start=" + Math.round(savedTime);
+    })();
+  </script>
 
 </div>
