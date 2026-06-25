@@ -8,15 +8,9 @@ class Channel < ApplicationRecord
   def self.create_by_id(youtube_id)
     rss_url = "https://www.youtube.com/feeds/videos.xml?channel_id=#{youtube_id}"
 
-    uri = URI.parse(rss_url)
-    request = Net::HTTP::Get.new(uri)
-    request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-      http.request(request)
-    end
-
-    return nil unless response.is_a?(Net::HTTPSuccess)
+    # Используем метод с редиректами
+    response = fetch_with_redirects(rss_url)
+    return nil if response.nil? || !response.is_a?(Net::HTTPSuccess)
 
     doc = REXML::Document.new(response.body)
 
@@ -30,21 +24,22 @@ class Channel < ApplicationRecord
     channel
   end
 
-  # НОВЫЙ МЕТОД: Скачивание видеороликов для конкретного канала
+  # Метод для скачивания видеороликов конкретного канала
   def fetch_videos
-    uri = URI.parse(rss_url)
-    request = Net::HTTP::Get.new(uri)
-    request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+    puts "=== [РОБОТ] Начинаю скачивать видео для канала: #{title} (ID: #{youtube_channel_id}) ==="
 
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-      http.request(request)
+    correct_rss_url = "https://www.youtube.com/feeds/videos.xml?channel_id=#{youtube_channel_id}"
+
+    response = Channel.fetch_with_redirects(correct_rss_url)
+
+    if response.nil? || !response.is_a?(Net::HTTPSuccess)
+      puts "=== [РОБОТ ОШИБКА] Не удалось скачать фид для канала #{title} ==="
+      return false
     end
 
-    return false unless response.is_a?(Net::HTTPSuccess)
-
     doc = REXML::Document.new(response.body)
+    puts "=== [РОБОТ] XML успешно скачан. Начинаю парсить ролики... ==="
 
-    # Проходимся циклом по каждому видео (<entry>) в XML-ленте
     doc.each_element("feed/entry") do |entry|
       video_id = entry.elements["yt:videoId"]&.text
       title = entry.elements["title"]&.text
@@ -66,5 +61,29 @@ class Channel < ApplicationRecord
     end
 
     true
+  end
+
+  # Вспомогательный метод: рекурсивно идет по редиректам (код 301, 302) до 5 раз
+  def self.fetch_with_redirects(url_value, limit = 5)
+    return nil if limit.zero?
+
+    uri = URI.parse(url_value)
+    request = Net::HTTP::Get.new(uri)
+    request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+      http.request(request)
+    end
+
+    case response
+    when Net::HTTPSuccess
+      response
+    when Net::HTTPRedirection
+      location = response["location"]
+      puts "=== [РОБОТ ИНФО] Редирект #{response.code} на адрес: #{location} ==="
+      fetch_with_redirects(location, limit - 1)
+    else
+      response
+    end
   end
 end

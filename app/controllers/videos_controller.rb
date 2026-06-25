@@ -52,4 +52,47 @@ class VideosController < ApplicationController
 
     head :ok # Отвечаем браузеру, что всё прошло успешно
   end
+
+    # Метод для импорта подписок из CSV-файла YouTube
+    def import_subscriptions
+    file = params[:subscriptions_file]
+
+    if file.present?
+      begin
+        require "csv"
+        csv_data = file.read.force_encoding("UTF-8")
+        imported_count = 0
+
+        # Читаем CSV без привязки к именам заголовков
+        CSV.parse(csv_data, headers: true) do |row|
+          # YouTube CSV всегда идет в порядке: 0 -> ID канала, 1 -> Ссылка, 2 -> Название
+          youtube_id = row[0]&.strip
+          title = row[2]&.strip
+
+          # Если ID канала валидный (начинается на UC)
+          if youtube_id.present? && youtube_id.start_with?("UC")
+            rss_url = "https://youtube.com/feeds/videos.xml?channel_id=#{youtube_id}"
+
+            channel = Channel.find_or_initialize_by(youtube_channel_id: youtube_id)
+            channel.title = title || "Неизвестный канал"
+            channel.rss_url = rss_url
+
+            if channel.save
+              imported_count += 1
+              # Выкачиваем видеоролики
+              FetchChannelVideosJob.perform_later(channel.id)
+            end
+          end
+        end
+
+        flash[:notice] = "Импорт завершен успешно! Добавлено каналов: #{imported_count}"
+      rescue => e
+        flash[:alert] = "Ошибка при чтении CSV: #{e.message}"
+      end
+    else
+      flash[:alert] = "Пожалуйста, выберите файл для加载."
+    end
+
+    redirect_to root_path
+  end
 end

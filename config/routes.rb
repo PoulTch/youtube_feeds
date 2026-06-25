@@ -12,6 +12,9 @@ Rails.application.routes.draw do
   get "videos/:id" => "videos#show", as: :watch_video
   post "videos/:id/save_progress" => "videos#save_progress"
 
+  # Маршрут для импорта файла подписок
+  post "import_subscriptions" => "videos#import_subscriptions", as: :import_subscriptions
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
