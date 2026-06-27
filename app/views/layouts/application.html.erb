@@ -43,19 +43,31 @@
 
           <!-- Список каналов из базы данных -->
           <% @sidebar_channels.each do |channel| %>
-            <li style="margin-bottom: 4px;">
-              <a href="<%= channel_page_path(channel) %>" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; color: #0f0f0f; text-decoration: none; font-size: 0.95rem; overflow: hidden; transition: background 0.2s;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='transparent'">
-                
-                <!-- Стильный круглый логотип-заглушка с первой буквой названия -->
+            <li style="margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; padding-right: 8px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='transparent'">
+              
+              <!-- Ссылка на сам канал (иконка + название) -->
+              <a href="<%= channel_page_path(channel) %>" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; color: #0f0f0f; text-decoration: none; font-size: 0.95rem; overflow: hidden; flex-grow: 1;">
                 <div style="width: 24px; height: 24px; background-color: #ff0000; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; flex-shrink: 0; text-transform: uppercase;">
                   <%= channel.title.to_s[0] %>
                 </div>
-
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">
                   <%= channel.title %>
                 </span>
               </a>
+
+              <!-- Маленькая аккуратная кнопка удаления -->
+              <%= button_to(delete_channel_path(channel), 
+                            method: :delete, 
+                            data: { confirm: "Вы точно хотите удалить канал #{channel.title} и все его ролики?" }, 
+                            style: "background: none; border: none; color: #909090; cursor: pointer; font-size: 0.85rem; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s, background 0.2s;",
+                            onmouseover: "this.style.color='#ff0000'; this.style.background='#ffe6e6'",
+                            onmouseout: "this.style.color='#909090'; this.style.background='transparent'") do %>
+                ✕
+              <% end %>
+
+
             </li>
+
           <% end %>
         </ul>
 

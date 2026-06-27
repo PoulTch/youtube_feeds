@@ -7,6 +7,9 @@ Rails.application.routes.draw do
 
   # Новый маршрут для страницы конкретного канала
   get "channels/:id" => "videos#show_channel", as: :channel_page
+  delete "channels/:id", to: "videos#destroy", as: :delete_channel
+
+
 
   # Новый маршрут для просмотра конкретного видео
   get "videos/:id" => "videos#show", as: :watch_video

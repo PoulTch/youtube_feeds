@@ -36,12 +36,15 @@
           <% end %>
         </a>
 
-        <!-- Контейнер полосы прогресса -->
-        <!-- Контейнер полосы прогресса (теперь всегда виден как серая подложка) -->
+        <!-- Контейнер полосы прогресса (серая подложка) -->
         <div style="width: 100%; height: 4px; background: #e0e0e0; position: relative; margin-top: -4px; z-index: 10;">
-          <!-- Красная линия заполнения -->
-          <div style="width: <%= video.progress_percentage %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
+          <!-- Красная линия заполнения (считывает базу + готова к JS) -->
+          <div 
+            data-local-progress="<%= video.youtube_video_id %>"
+            style="width: <%= video.progress_percentage %>%; height: 100%; background: #ff0000; transition: width 0.3s;"
+          ></div>
         </div>
+
 
 
         <div style="padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">

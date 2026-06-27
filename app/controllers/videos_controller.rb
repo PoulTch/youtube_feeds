@@ -95,4 +95,12 @@ class VideosController < ApplicationController
 
     redirect_to root_path
   end
+
+  # Метод для удаления канала и всех его видеороликов
+  def destroy
+    @channel = Channel.find(params[:id])
+    @channel.destroy # Благодаря dependent: :destroy все видео канала сотрутся автоматически!
+        flash[:notice] = "Канал «#{@channel.title}» и все его видео успешно удалены."
+    redirect_to root_path
+  end
 end
