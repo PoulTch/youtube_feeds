@@ -1,8 +1,12 @@
 class VideosController < ApplicationController
   # 1. Главная страница со всеми видео
   def index
-    @videos = Video.includes(:channel).order(published_at: :desc)
+    # Берем видео, у которых либо нет прогресса, либо просмотрено меньше 90% (оставляем зазор на титры)
+    @videos = Video.includes(:channel)
+                   .where("watched_seconds IS NULL OR watched_seconds < (duration_seconds * 0.9)")
+                   .order(published_at: :desc)
   end
+
 
   # 2. Обработка формы добавления нового канала
   def create_channel
@@ -32,7 +36,9 @@ class VideosController < ApplicationController
       redirect_to root_path and return
     end
 
-    @videos = @channel.videos.order(published_at: :desc)
+    @videos = @channel.videos
+                      .where("watched_seconds IS NULL OR watched_seconds < (duration_seconds * 0.9)")
+                      .order(published_at: :desc)
   end
 
   # Новый метод для страницы просмотра видео

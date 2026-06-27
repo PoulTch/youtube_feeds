@@ -22,4 +22,4 @@ production:
 development:
   refresh_all_channels:
     class: RefreshAllChannelsJob
-    schedule: "every 5 minutes"
+    schedule: "every 2 hours"
