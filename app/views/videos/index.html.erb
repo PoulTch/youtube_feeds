@@ -12,13 +12,34 @@
     </div>
   <% end %>
 
-  <!-- Форма добавления нового канала -->
-  <div style="background: #f9f9f9; padding: 20px; border-radius: 12px; margin-bottom: 40px; border: 1px solid #e0e0e0; display: flex; width: 100%; box-sizing: border-box;">
-  <%= form_with url: add_channel_path, method: :post, local: true, style: "display: flex; gap: 10px; width: 100%;" do |f| %>
-    <%= f.text_field :youtube_channel_id, placeholder: "Вставь ID канала (например, UCC492BS_DUo3ScrXgUPJDew)", style: "flex-grow: 1; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; min-width: 0;" %>
-    <%= f.submit "Добавить", style: "background: #ff0000; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; white-space: nowrap;" %>
+  <div style="background: #ffffff; border: 1px solid #e5e5e5; padding: 20px; border-radius: 12px; margin-bottom: 30px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between;">
+  
+  <!-- ЛЕВАЯ ЧАСТЬ: Форма добавления одного канала -->
+  <!-- ЗАМЕНИ СТРОКУ НАЧАЛА ФОРМЫ НА ЭТУ: -->
+<%= form_with url: add_channel_path, method: :post, local: true, style: "display: flex; align-items: center; gap: 10px; flex-grow: 1; max-width: 500px;" do |f| %>
+    <div style="display: flex; flex-direction: column; flex-grow: 1; gap: 4px;">
+      <label style="font-size: 0.85rem; font-weight: bold; color: #606060;">Добавить новый канал по ID:</label>
+      <%= f.text_field :youtube_channel_id, autocomplete: "off", placeholder: "Например: UC...", style: "padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box;" %>
+    </div>
+    <%= f.submit "Добавить", style: "background: #ff0000; color: #ffffff; border: none; padding: 11px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-top: 20px; transition: background 0.2s;", onmouseover: "this.style.background='#cc0000'", onmouseout: "this.style.background='#ff0000'" %>
   <% end %>
+
+  <!-- РАЗДЕЛИТЕЛЬ (визуальная черта между формами) -->
+  <div style="width: 1px; height: 50px; background: #e5e5e5; display: inline-block;"></div>
+
+  <!-- ПРАВАЯ ЧАСТЬ: Удобная кнопка импорта CSV подписок -->
+  <div style="display: flex; flex-direction: column; gap: 4px; min-width: 250px;">
+    <span style="font-size: 0.85rem; font-weight: bold; color: #606060;">Массовый импорт подписок:</span>
+    <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true do |f| %>
+      <label style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #f2f2f2; color: #0f0f0f; padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border: 1px dashed #cccccc; text-align: center; transition: background 0.2s, border-color 0.2s;" onmouseover="this.style.background='#e6e6e6'; this.style.borderColor='#999999'" onmouseout="this.style.background='#f2f2f2'; this.style.borderColor='#cccccc'">
+        📁 Выбрать subscriptions.csv
+        <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
+      </label>
+    <% end %>
   </div>
+
+</div>
+
 
 
 

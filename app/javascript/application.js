@@ -8,21 +8,21 @@ function applyLocalProgressBars() {
     const youtubeId = bar.getAttribute("data-local-progress");
     const savedPercent = localStorage.getItem(`${youtubeId}_percent`);
     
-    // Если в памяти браузера есть свежий процент, красим линию им!
     if (savedPercent !== null) {
       bar.style.width = `${savedPercent}%`;
-
-      // НАША НОВАЯ МАГИЯ: если просмотрено больше 90%, находим всю карточку видео и стираем её из HTML!
+      
+      // Если видео просмотрено более чем на 90%
       if (parseInt(savedPercent, 10) >= 90) {
-        // Ищем самый верхний блок карточки (контейнер со стилями, в котором лежит полоска)
-        const videoCard = bar.closest("[style*='width: 210px']") || bar.closest("div[style*='flex-direction']");
-        if (videoCard) {
-          videoCard.style.display = "none"; // Ролик исчезает мгновенно!
+        // Ищем именно карточку видео (поднимаемся до родительского flex-элемента самой сетки видео)
+        const videoCard = bar.closest("div[style*='width: 210px']") || bar.closest(".video-card") || bar.parentElement.parentElement;
+        if (videoCard && videoCard.style.display !== "none") {
+          videoCard.style.display = "none"; // Карточка мгновенно исчезает!
         }
-      }        
+      }
     }
   });
 }
+
 
 // Запускаем при первой загрузке страницы
 document.addEventListener("DOMContentLoaded", applyLocalProgressBars);
