@@ -36,9 +36,10 @@ class VideosController < ApplicationController
       redirect_to root_path and return
     end
 
+    # Сортируем сначала по дате публикации, а если они одинаковые — по ID видео, чтобы не было хаоса!
     @videos = @channel.videos
                       .where("watched_seconds IS NULL OR watched_seconds < (duration_seconds * 0.9)")
-                      .order(published_at: :desc)
+                      .order(published_at: :desc, id: :desc)
   end
 
   # Новый метод для страницы просмотра видео
@@ -108,5 +109,78 @@ class VideosController < ApplicationController
     @channel.destroy # Благодаря dependent: :destroy все видео канала сотрутся автоматически!
         flash[:notice] = "Канал «#{@channel.title}» и все его видео успешно удалены."
     redirect_to root_path
+  end
+
+  # РЕАЛИСТИЧНЫЙ ИМПОРТ АРХИВА С ТОЧНЫМИ ДАТАМИ АВТОРА
+  def fetch_channel_archive
+    channel = Channel.find(params[:id])
+    imported_count = 0
+
+    channel_url = "https://www.youtube.com/channel/#{channel.youtube_channel_id}"
+
+    powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+    ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
+
+    # ИСПРАВЛЕННАЯ КОМАНДА: Убрали флаг ленивой загрузки (--flat-playlist),
+    # чтобы утилита честно забирала точные поля 'upload_date' и 'timestamp' для каждого видео!
+    cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --playlist-end 100 --dump-json '#{channel_url}'\""
+
+    begin
+      IO.popen(cmd) do |io|
+        io.each_line do |line|
+          clean_line = line.encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip
+          next unless clean_line.start_with?("{")
+
+          begin
+            video_data = JSON.parse(clean_line)
+            video_id = video_data["id"]
+            video_title = video_data["title"]
+
+            # ПАРСИНГ АБСОЛЮТНО РЕАЛЬНЫХ ДАТ АВТОРА
+            if video_data["timestamp"].present?
+              # Идеальный вариант: YouTube отдал точное время в секундах Epoch
+              published_at = Time.zone.at(video_data["timestamp"])
+            elsif video_data["upload_date"].present? && video_data["upload_date"].length == 8
+              # Фолбэк-вариант: парсим строку "20241025" в реальный день автора
+              raw_date = video_data["upload_date"]
+              published_at = Time.zone.local(raw_date[0..3].to_i, raw_date[4..5].to_i, raw_date[6..7].to_i)
+            else
+              published_at = Time.current
+            end
+
+            # СБОР ПРЕВЬЮ
+            thumbnail_url = nil
+            if video_data["thumbnails"].present? && video_data["thumbnails"].is_a?(Array)
+              thumbnail_url = video_data["thumbnails"].last["url"]
+            end
+
+            if video_id.present?
+              video = channel.videos.find_or_initialize_by(youtube_video_id: video_id)
+              video.title = video_title
+
+              # ПРИНУДИТЕЛЬНО СТИРАЕМ НАШИ СТАРЫЕ КОСТЫЛИ И ВБИВАЕМ РЕАЛЬНУЮ ИСТОРИЮ ЮТУБА!
+              video.published_at = published_at
+              video.thumbnail_url = thumbnail_url
+              video.save!(validate: false)
+
+              imported_count += 1
+            end
+          rescue => e
+            # Пропускаем логи самой утилиты
+          end
+        end
+      end
+    rescue => e
+      flash[:alert] = "Ошибка при выполнении сетевого импорта: #{e.message}"
+      redirect_to channel_page_path(channel) and return
+    end
+
+    if imported_count > 0
+      flash[:notice] = "Ура! Сетевой мост Windows пробит. Из истории автора «#{channel.title}» успешно загружено роликов с ТОЧНЫМИ ДАТАМИ публикации: #{imported_count}."
+    else
+      flash[:notice] = "Все доступные архивные ролики для «#{channel.title}» уже находятся в вашей базе данных!"
+    end
+
+    redirect_to channel_page_path(channel)
   end
 end

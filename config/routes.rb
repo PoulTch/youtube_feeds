@@ -9,7 +9,8 @@ Rails.application.routes.draw do
   get "channels/:id" => "videos#show_channel", as: :channel_page
   delete "channels/:id", to: "videos#destroy", as: :delete_channel
 
-
+  # Маршрут для запуска сканирования полного архива канала через yt-dlp
+  post "channels/:id/fetch_archive" => "videos#fetch_channel_archive", as: :fetch_channel_archive
 
   # Новый маршрут для просмотра конкретного видео
   get "videos/:id" => "videos#show", as: :watch_video
