@@ -1,6 +1,6 @@
 <div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px;">
 
-    <!-- Блок уведомлений -->
+  <!-- Блок уведомлений -->
   <% if flash[:notice] %>
     <div style="background: #e1f5fe; color: #0288d1; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;">
       <%= flash[:notice] %>
@@ -12,44 +12,13 @@
     </div>
   <% end %>
 
-  <div style="background: #ffffff; border: 1px solid #e5e5e5; padding: 20px; border-radius: 12px; margin-bottom: 30px; display: flex; flex-wrap: wrap; gap: 24px; align-items: center; justify-content: space-between;">
-  
-  <!-- ЛЕВАЯ ЧАСТЬ: Форма добавления одного канала -->
-  <!-- ЗАМЕНИ СТРОКУ НАЧАЛА ФОРМЫ НА ЭТУ: -->
-<%= form_with url: add_channel_path, method: :post, local: true, style: "display: flex; align-items: center; gap: 10px; flex-grow: 1; max-width: 500px;" do |f| %>
-    <div style="display: flex; flex-direction: column; flex-grow: 1; gap: 4px;">
-      <label style="font-size: 0.85rem; font-weight: bold; color: #606060;">Добавить новый канал по ID:</label>
-      <%= f.text_field :youtube_channel_id, autocomplete: "off", placeholder: "Например: UC...", style: "padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; width: 100%; box-sizing: border-box;" %>
-    </div>
-    <%= f.submit "Добавить", style: "background: #ff0000; color: #ffffff; border: none; padding: 11px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; margin-top: 20px; transition: background 0.2s;", onmouseover: "this.style.background='#cc0000'", onmouseout: "this.style.background='#ff0000'" %>
-  <% end %>
-
-  <!-- РАЗДЕЛИТЕЛЬ (визуальная черта между формами) -->
-  <div style="width: 1px; height: 50px; background: #e5e5e5; display: inline-block;"></div>
-
-  <!-- ПРАВАЯ ЧАСТЬ: Удобная кнопка импорта CSV подписок -->
-  <div style="display: flex; flex-direction: column; gap: 4px; min-width: 250px;">
-    <span style="font-size: 0.85rem; font-weight: bold; color: #606060;">Массовый импорт подписок:</span>
-    <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true do |f| %>
-      <label style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #f2f2f2; color: #0f0f0f; padding: 10px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border: 1px dashed #cccccc; text-align: center; transition: background 0.2s, border-color 0.2s;" onmouseover="this.style.background='#e6e6e6'; this.style.borderColor='#999999'" onmouseout="this.style.background='#f2f2f2'; this.style.borderColor='#cccccc'">
-        📁 Выбрать subscriptions.csv
-        <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
-      </label>
-    <% end %>
-  </div>
-
-</div>
-
-
-
-
-  <!-- Сетка для видеороликов -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+  <!-- Сетка для видеороликов (Перенесли тег закрытия в самый конец, чтобы сетка была внутри контейнера!) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
     <% @videos.each do |video| %>
       <div style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         
-        <!-- Ссылка на плеер вокруг картинки -->
-        <a href="<%= watch_video_path(video) %>">
+        <!-- Ссылка на плеер вокруг картинки + ВСПЛЫВАЮЩАЯ ПОДСКАЗКА (title) -->
+        <a href="<%= watch_video_path(video) %>" title="<%= video.title %>">
           <% if video.thumbnail_url.present? %>
             <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
           <% else %>
@@ -66,13 +35,11 @@
           ></div>
         </div>
 
-
-
         <div style="padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <!-- Ссылка на плеер вокруг названия -->
+            <!-- Ссылка на плеер вокруг названия + ВСПЛЫВАЮЩАЯ ПОДСКАЗКА (title) -->
             <h3 style="margin: 0 0 8px 0; font-size: 1rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              <a href="<%= watch_video_path(video) %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
+              <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
                 <%= video.title %>
               </a>
             </h3>
@@ -91,4 +58,5 @@
       </div>
     <% end %>
   </div>
-</div>
+
+</div> <!-- Вот теперь этот главный закрывающий тег стоит на своём законном месте! -->

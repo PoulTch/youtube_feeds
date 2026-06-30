@@ -28,8 +28,8 @@
     <% @videos.each do |video| %>
       <div style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         
-        <!-- Ссылка на плеер вокруг картинки -->
-        <a href="<%= watch_video_path(video) %>">
+        <!-- Ссылка на плеер вокруг картинки + ВСПЛЫВАЮЩАЯ ПОДСКАЗКА -->
+        <a href="<%= watch_video_path(video) %>" title="<%= video.title %>">
           <% if video.thumbnail_url.present? %>
             <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
           <% else %>
@@ -46,21 +46,14 @@
           ></div>
         </div>
 
-
-
         <div style="padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <!-- Ссылка на плеер вокруг названия -->
+            <!-- Ссылка на плеер вокруг названия + ВСПЛЫВАЮЩАЯ ПОДСКАЗКА -->
             <h3 style="margin: 0 0 8px 0; font-size: 1rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              <a href="<%= watch_video_path(video) %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
+              <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
                 <%= video.title %>
               </a>
             </h3>
-            <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold;">
-              <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
-                <%= video.channel.title %>
-              </a>
-            </p>
           </div>
           
           <div style="margin-top: 12px; font-size: 0.8rem; color: #909090;">
@@ -72,3 +65,4 @@
     <% end %>
   </div>
 </div>
+

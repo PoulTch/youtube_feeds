@@ -24,55 +24,99 @@
     <div style="display: flex; font-family: sans-serif; min-height: 100vh;">
       
       <!-- ЛЕВАЯ ПАНЕЛЬ: САЙДБАР (фиксированный слева) -->
-      <aside style="width: 260px; background: #ffffff; border-right: 1px solid #e5e5e5; padding: 20px; box-sizing: border-box; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto;">
-        <div style="margin-bottom: 30px;">
-          <a href="<%= root_path %>" style="text-decoration: none; color: #ff0000; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-            📺 NewPipe Rails
+      <aside style="width: 260px; background: #f9f9f9; border-right: 1px solid #e5e5e5; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; position: fixed; box-sizing: border-box; overflow-y: auto;">
+        
+        <div>
+          <!-- Логотип или Название сервиса -->
+          <a href="<%= root_path %>" style="text-decoration: none; color: #ff0000; font-size: 1.4rem; font-weight: bold; display: flex; align-items: center; gap: 8px; margin-bottom: 25px;">
+            📺 Моя Лента
           </a>
+
+          <!-- ССЫЛКА НА ОБЩУЮ ЛЕНТУ -->
+          <a href="<%= root_path %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold; display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; background: #f0f0f0; margin-bottom: 20px;">
+            🏠 Общая лента
+          </a>
+
+          <hr style="border: none; border-top: 1px solid #e5e5e5; margin-bottom: 20px;">
+
+          <!-- УМНЫЙ СВЕРНУТЫЙ СПИСОК КАНАЛОВ -->
+          <h3 style="font-size: 0.85rem; color: #606060; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px;">Мои Подписки (<%= @sidebar_channels.count %>)</h3>
+          
+          <details style="width: 100%;">
+            <summary style="list-style: none; font-size: 0.9rem; color: #ff0000; font-weight: bold; cursor: pointer; padding: 8px 10px; background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; text-align: center; margin-bottom: 15px; user-select: none; transition: background 0.2s;" onmouseover="this.style.background='#fff0f0'" onmouseout="this.style.background='#fff'">
+              ▼ Развернуть список каналов
+            </summary>
+            
+            <!-- Сам список каналов, который спрячется под кат -->
+            <div style="max-height: 400px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 4px;">
+              <% @sidebar_channels.each do |channel| %>
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='#eee'" onmouseout="this.style.background='transparent'">
+                  <a href="<%= channel_page_path(channel) %>" style="text-decoration: none; color: #0f0f0f; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; margin-right: 10px;">
+                    🔴 <%= channel.title %>
+                  </a>
+                  <%= button_to "✕", delete_channel_path(channel), method: :delete, data: { turbo_confirm: "Удалить канал #{channel.title} и все его видео?" }, style: "background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.8rem; padding: 2px 6px; border-radius: 4px;", onmouseover: "this.style.color='#ff0000'; this.style.background='#fff0f0'", onmouseout: "this.style.color='#aaa'; this.style.background='none'" %>
+                </div>
+              <% end %>
+            </div>
+          </details>
+        </div>
+        
+        <!-- НИЖНЯЯ ЧАСТЬ: КНОПКА НАСТРОЕК + МОДАЛЬНОЕ ОКНО -->
+  <div style="margin-top: auto; padding-top: 15px; border-top: 1px solid #e5e5e5;">
+    <!-- Кнопка теперь открывает окно с помощью встроенного JS-метода showModal() -->
+    <button onclick="document.getElementById('settings-dialog').showModal()" style="width: 100%; border: 1px solid #ccc; color: #0f0f0f; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 8px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: background 0.2s; font-size: 0.95rem;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='#fff'">
+      ⚙️ Настройки системы
+    </button>
+
+    <!-- САМО ВСПЛЫВАЮЩЕЕ ОКНО (DIALOG) -->
+    <dialog id="settings-dialog" style="border: none; border-radius: 16px; padding: 0; width: 550px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-width: 90%; background: #ffffff;">
+      
+      <!-- Шапка окна с кнопкой закрытия -->
+      <div style="background: #f9f9f9; padding: 16px 24px; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; justify-content: space-between;">
+        <h2 style="margin: 0; font-size: 1.2rem; color: #0f0f0f;">⚙️ Настройки Feeds-Агрегатора</h2>
+        <button onclick="document.getElementById('settings-dialog').close()" style="background: none; border: none; font-size: 1.5rem; color: #aaa; cursor: pointer; line-height: 1; padding: 0 5px;" onmouseover="this.style.color='#0f0f0f'" onmouseout="this.style.color='#aaa'">&times;</button>
+      </div>
+
+      <!-- Внутренности окна (Сюда мы спрятали наши формы управления) -->
+      <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px;">
+        
+        <!-- Форма 1: Добавление одного канала -->
+        <%= form_with url: add_channel_path, method: :post, local: true, style: "display: flex; flex-direction: column; gap: 8px;" do |f| %>
+          <label style="font-size: 0.9rem; font-weight: bold; color: #606060;">Добавить новый канал по ID:</label>
+          <div style="display: flex; gap: 10px;">
+            <%= f.text_field :youtube_channel_id, autocomplete: "off", placeholder: "Например: UC...", style: "padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; flex-grow: 1; box-sizing: border-box;" %>
+            <%= f.submit "Добавить", style: "background: #ff0000; color: #ffffff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: background 0.2s;", onmouseover: "this.style.background='#cc0000'", onmouseout: "this.style.background='#ff0000'" %>
+          </div>
+        <% end %>
+
+        <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 4px 0;">
+
+        <!-- Форма 2: Массовый импорт подписок -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <span style="font-size: 0.9rem; font-weight: bold; color: #606060;">Массовый импорт из YouTube (subscriptions.csv):</span>
+          <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true do |f| %>
+            <label style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #f2f2f2; color: #0f0f0f; padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border: 1px dashed #cccccc; text-align: center; transition: background 0.2s, border-color 0.2s;" onmouseover="this.style.background='#e6e6e6'; this.style.borderColor='#999999'" onmouseout="this.style.background='#f2f2f2'; this.style.borderColor='#cccccc'">
+              📁 Выбрать файл подписок и загрузить
+              <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
+            </label>
+          <% end %>
         </div>
 
-        <h3 style="font-size: 0.85rem; color: #606060; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px;">Мои подписки</h3>
-        
-        <ul style="list-style: none; padding: 0; margin: 0;">
-          <!-- Ссылка на общую ленту -->
-          <li style="margin-bottom: 8px;">
-            <a href="<%= root_path %>" style="display: block; padding: 10px 12px; border-radius: 8px; color: #0f0f0f; text-decoration: none; font-weight: bold; background: #f2f2f2;">
-              🏠 Общая лента
-            </a>
-          </li>
+      </div>
+    </dialog>
 
-          <!-- Список каналов из базы данных -->
-          <% @sidebar_channels.each do |channel| %>
-            <li style="margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; padding-right: 8px; border-radius: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='transparent'">
-              
-              <!-- Ссылка на сам канал (иконка + название) -->
-              <a href="<%= channel_page_path(channel) %>" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; color: #0f0f0f; text-decoration: none; font-size: 0.95rem; overflow: hidden; flex-grow: 1;">
-                <div style="width: 24px; height: 24px; background-color: #ff0000; color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.75rem; flex-shrink: 0; text-transform: uppercase;">
-                  <%= channel.title.to_s[0] %>
-                </div>
-                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px;">
-                  <%= channel.title %>
-                </span>
-              </a>
-
-              <!-- Маленькая аккуратная кнопка удаления -->
-              <%= button_to(delete_channel_path(channel), 
-                            method: :delete, 
-                            data: { confirm: "Вы точно хотите удалить канал #{channel.title} и все его ролики?" }, 
-                            style: "background: none; border: none; color: #909090; cursor: pointer; font-size: 0.85rem; padding: 4px 8px; border-radius: 4px; display: flex; align-items: center; justify-content: center; transition: color 0.2s, background 0.2s;",
-                            onmouseover: "this.style.color='#ff0000'; this.style.background='#ffe6e6'",
-                            onmouseout: "this.style.color='#909090'; this.style.background='transparent'") do %>
-                ✕
-              <% end %>
-
-
-            </li>
-
-          <% end %>
-        </ul>
+    <!-- Стили для красивого размытия заднего фона модального окна -->
+    <style>
+      dialog::backdrop {
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+      }
+    </style>
+  </div>
 
 
       </aside>
+
 
       <!-- ПРАВАЯ ПАНЕЛЬ: ОСНОВНОЙ КОНТЕНТ (Сюда подставляются вьюшки) -->
       <main style="flex-grow: 1; padding: 40px; box-sizing: border-box; overflow-x: hidden;">
