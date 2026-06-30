@@ -51,9 +51,19 @@
             <div style="max-height: 400px; overflow-y: auto; padding-right: 5px; display: flex; flex-direction: column; gap: 4px;">
               <% @sidebar_channels.each do |channel| %>
                 <div style="display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 6px; transition: background 0.2s;" onmouseover="this.style.background='#eee'" onmouseout="this.style.background='transparent'">
-                  <a href="<%= channel_page_path(channel) %>" style="text-decoration: none; color: #0f0f0f; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; margin-right: 10px;">
-                    🔴 <%= channel.title %>
+                  <a href="<%= channel_page_path(channel) %>" style="text-decoration: none; color: #0f0f0f; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; margin-right: 10px; display: flex; align-items: center; gap: 10px;">
+                    <% if channel.avatar_url.present? %>
+                      <!-- Если в базе есть ссылка на картинку (оригинальная или DiceBear) — выводим её! -->
+                      <img src="<%= channel.avatar_url %>" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background: #e0e0e0; flex-shrink: 0;">
+                    <% else %>
+                      <!-- На всякий случай страховочный макет, если база еще не обновилась -->
+                      <div style="width: 24px; height: 24px; border-radius: 50%; background: #0f0f0f; color: #fff; font-size: 0.7rem; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0;">
+                        <%= channel.title[0..1].upcase %>
+                      </div>
+                    <% end %>
+                    <%= channel.title %>
                   </a>
+
                   <%= button_to "✕", delete_channel_path(channel), method: :delete, data: { turbo_confirm: "Удалить канал #{channel.title} и все его видео?" }, style: "background: none; border: none; color: #aaa; cursor: pointer; font-size: 0.8rem; padding: 2px 6px; border-radius: 4px;", onmouseover: "this.style.color='#ff0000'; this.style.background='#fff0f0'", onmouseout: "this.style.color='#aaa'; this.style.background='none'" %>
                 </div>
               <% end %>

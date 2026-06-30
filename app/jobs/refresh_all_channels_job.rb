@@ -4,7 +4,7 @@ class RefreshAllChannelsJob < ApplicationJob
   def perform
     Rails.logger.info "=== [РОБОТ-ПЛАНИРОВЩИК] Начинаю плановое обновление всех каналов... ==="
 
-    # Берем каждый канал и отправляем воркеру задачу на скачивание видео
+    # Находим каждый канал в базе и отдаем его роботу-исполнителю (которого ты мне прислал)
     Channel.find_each do |channel|
       FetchChannelVideosJob.perform_later(channel.id)
     end
