@@ -71,4 +71,6 @@ Rails.application.configure do
   # config.generators.apply_rubocop_autocorrect_after_generate!
   # Настраиваем Rails использовать Solid Queue для фоновых задач в разработке
   config.active_job.queue_adapter = :solid_queue
+
+  config.youtube_api_key = "AIzaSyAQ-goUVc1C0a55k9GUBwvacgC__cnovok"
 end

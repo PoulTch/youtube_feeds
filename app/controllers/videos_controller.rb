@@ -163,21 +163,15 @@ class VideosController < ApplicationController
       redirect_to channel_page_path(channel) and return
     end
 
-    # НАШ ТРИУМФАЛЬНЫЙ ФИНАЛ: Генерируем премиальный, яркий и сочный круглый аватар с инициалами автора!
-    # Он работает локально, никогда не ломается от блокировок Google и идеально пробивает Turbo-кэш!
-    begin
-      avatar_seed = CGI.escape(channel.title)
-      real_avatar = "https://api.dicebear.com/7.x/initials/svg?seed=#{avatar_seed}&radius=50&backgroundType=solid"
-      channel.update!(avatar_url: real_avatar)
-    rescue => e
-      puts "!!! Не удалось обновить аватарку: #{e.message}"
-    end
+    # НАШ ТРИУМФАЛЬНЫЙ ФИНАЛ: Запускаем оригинальный сборщик аватарки через yt-dlp!
+    # Он сам выкачает настоящее фото, а если не сможет — оставит DiceBear как страховку.
+    channel.fetch_avatar_from_api
 
     # Отправляем флеш-уведомление
     if imported_count > 0
-      flash[:notice] = "Ура! Сетевой мост Windows пробит. Из истории автора «#{channel.title}» успешно загружено роликов: #{imported_count}. Сайдбар обновлен!"
+      flash[:notice] = "Ура! Сетевой мост Windows пробит. Из истории автора «#{channel.title}» успешно загружено роликов: #{imported_count}. Сайдбар и оригинальная аватарка обновлены!"
     else
-      flash[:notice] = "Все доступные архивные ролики для «#{channel.title}» уже в вашей базе данных!"
+      flash[:notice] = "Все доступные архивные ролики для «#{channel.title}» уже в вашей базе данных! Оригинальная аватарка обновлена."
     end
 
     # ЖЕЛЕЗНЫЙ РЕДИРЕКТ С ОТКЛЮЧЕНИЕМ TURBO ДЛЯ ОБНОВЛЕНИЯ САЙДБАРА

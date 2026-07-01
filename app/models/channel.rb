@@ -63,27 +63,36 @@ class Channel < ApplicationRecord
     true
   end
 
-  # Вспомогательный метод: рекурсивно идет по редиректам (код 301, 302) до 5 раз
-  def self.fetch_with_redirects(url_value, limit = 5)
-    return nil if limit.zero?
+  # Метод для скачивания оригинальной аватарки через ОФИЦИАЛЬНЫЙ YouTube API v3
+  def fetch_avatar_from_api
+    api_key = Rails.application.config.youtube_api_key
+    return if api_key.blank? || youtube_channel_id.blank?
 
-    uri = URI.parse(url_value)
-    request = Net::HTTP::Get.new(uri)
-    request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    # Стучимся в Google API v3 за метаданными канала
+    url = "https://www.googleapis.com/youtube/v3/channels?part=snippet&id=#{youtube_channel_id}&key=#{api_key}"
 
-    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-      http.request(request)
+    begin
+      uri = URI.parse(url)
+      response = Net::HTTP.get_response(uri)
+
+      if response.is_a?(Net::HTTPSuccess)
+        data = JSON.parse(response.body)
+
+        # Безопасно вытаскиваем аватарку самого высокого разрешения (high или medium)
+        avatar_url_from_api = data.dig("items", 0, "snippet", "thumbnails", "high", "url") ||
+                              data.dig("items", 0, "snippet", "thumbnails", "medium", "url") ||
+                              data.dig("items", 0, "snippet", "thumbnails", "default", "url")
+
+        if avatar_url_from_api.present?
+          # Жестко пишем её в нашу свежую колонку базы данных PostgreSQL!
+          self.update_columns(avatar_url: avatar_url_from_api)
+          puts "--> [API GOOGLE] Успешно загружен оригинал для: #{self.title}"
+          return true
+        end
+      end
+    rescue => e
+      Rails.logger.error "Ошибка сбора аватарки через YouTube API: #{e.message}"
     end
-
-    case response
-    when Net::HTTPSuccess
-      response
-    when Net::HTTPRedirection
-      location = response["location"]
-      puts "=== [РОБОТ ИНФО] Редирект #{response.code} на адрес: #{location} ==="
-      fetch_with_redirects(location, limit - 1)
-    else
-      response
-    end
+    false
   end
 end
