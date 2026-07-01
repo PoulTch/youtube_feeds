@@ -1,7 +1,7 @@
-<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 900px; margin: 0 auto;">
+<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px;">
 
-  
-  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); background: #000;">
+  <!-- Плеер увеличен до 1000px и будет выглядеть масштабнее -->
+  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000;">
     <!-- Айфрейм без лишних JS-зависимостей, только чистый старт -->
     <iframe 
       id="youtube-player"
@@ -12,21 +12,27 @@
     </iframe>
   </div>
 
-  <h1 style="font-size: 1.6rem; color: #0f0f0f; margin-top: 24px; margin-bottom: 8px; line-height: 1.4;">
+  <h1 style="font-size: 1.8rem; color: #0f0f0f; margin-top: 24px; margin-bottom: 12px; line-height: 1.4; font-weight: bold;">
     <%= @video.title %>
   </h1>
 
-  <div style="margin-bottom: 20px;">
-    <a href="<%= channel_page_path(@video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold; font-size: 1.1rem;">
-      🔴 <%= @video.channel.title %>
+  <!-- БЛОК АВТОРСТВА: Внедряем живую круглую аватарку вместо красной точки -->
+  <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">
+    <a href="<%= channel_page_path(@video.channel) %>" style="text-decoration: none; display: flex; align-items: center; gap: 10px; color: #ff0000; font-weight: bold; font-size: 1.1rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
+      <% if @video.channel.avatar_url.present? %>
+        <img src="<%= @video.channel.avatar_url %>" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <% else %>
+        <span style="font-size: 1.2rem;">🔴</span>
+      <% end %>
+      <%= @video.channel.title %>
     </a>
-    <span style="color: #606060; margin-left: 15px; font-size: 0.9rem;">
+    <span style="color: #606060; font-size: 0.95rem; border-left: 1px solid #ccc; padding-left: 12px;">
       Опубликовано: <%= @video.published_at.strftime("%d.%m.%Y в %H:%M") %>
     </span>
   </div>
 
   <% if @video.description.present? %>
-    <div style="background: #f2f2f2; padding: 20px; border-radius: 12px; font-size: 0.95rem; color: #0f0f0f; line-height: 1.6; white-space: pre-wrap;">
+    <div style="background: #f2f2f2; padding: 20px; border-radius: 12px; font-size: 0.95rem; color: #0f0f0f; line-height: 1.6; white-space: pre-wrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
       <%= @video.description %>
     </div>
   <% end %>
