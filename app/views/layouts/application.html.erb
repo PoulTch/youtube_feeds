@@ -91,7 +91,7 @@
       <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px;">
         
         <!-- Форма 1: Добавление одного канала -->
-        <%= form_with url: add_channel_path, method: :post, local: true, style: "display: flex; flex-direction: column; gap: 8px;" do |f| %>
+        <%= form_with url: add_channel_path, method: :post, local: true, data: { turbo: false }, style: "display: flex; flex-direction: column; gap: 8px;" do |f| %>
           <label style="font-size: 0.9rem; font-weight: bold; color: #606060;">Добавить новый канал по ID:</label>
           <div style="display: flex; gap: 10px;">
             <%= f.text_field :youtube_channel_id, autocomplete: "off", placeholder: "Например: UC...", style: "padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; flex-grow: 1; box-sizing: border-box;" %>

@@ -10,13 +10,19 @@ class VideosController < ApplicationController
 
   # 2. Обработка формы добавления нового канала
   def create_channel
-    youtube_id = params[:youtube_channel_id].strip
+    youtube_id = params[:youtube_channel_id].to_s.strip
 
     if youtube_id.present?
       channel = Channel.create_by_id(youtube_id)
       if channel
+        # Сначала скачиваем свежие видеоролики автора
         channel.fetch_videos
-        flash[:notice] = "Канал '#{channel.title}' успешно добавлен!"
+
+        # НАШ МГНОВЕННЫЙ ДЕСАНТ: Качаем оригинальную аватарку из Google API v3!
+        # Теперь ключ берется безопасно из файла .env и не улетит на гитхаб
+        channel.fetch_avatar_from_api
+
+        flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Сайдбар и оригинальная аватарка обновлены."
       else
         flash[:alert] = "Не удалось добавить канал. Проверьте ID."
       end
@@ -24,8 +30,10 @@ class VideosController < ApplicationController
       flash[:alert] = "ID канала не может быть пустым."
     end
 
-    redirect_to root_path
+    # ИСПРАВЛЕНО: Добавили жесткий редирект, чтобы Opera перерисовала сайдбар без ручного F5!
+    redirect_to root_path, data: { turbo: false }
   end
+
 
   # 3. Страница конкретного одного канала (Вынесена отдельно!)
   def show_channel

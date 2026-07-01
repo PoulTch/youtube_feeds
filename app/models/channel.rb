@@ -9,7 +9,7 @@ class Channel < ApplicationRecord
     rss_url = "https://www.youtube.com/feeds/videos.xml?channel_id=#{youtube_id}"
 
     # Используем метод с редиректами
-    response = fetch_with_redirects(rss_url)
+    response = Channel.fetch_with_redirects(rss_url)
     return nil if response.nil? || !response.is_a?(Net::HTTPSuccess)
 
     doc = REXML::Document.new(response.body)
@@ -94,5 +94,29 @@ class Channel < ApplicationRecord
       Rails.logger.error "Ошибка сбора аватарки через YouTube API: #{e.message}"
     end
     false
+  end
+
+  # ВОЗВРАЩЕН ИЗ НЕБЫТИЯ: Вспомогательный метод класса для пробития редиректов Гугла
+  def self.fetch_with_redirects(url_value, limit = 5)
+    return nil if limit.zero?
+
+    uri = URI.parse(url_value)
+    request = Net::HTTP::Get.new(uri)
+    request["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+    response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+      http.request(request)
+    end
+
+    case response
+    when Net::HTTPSuccess
+      response
+    when Net::HTTPRedirection
+      location = response["location"]
+      puts "=== [РОБОТ ИНФО] Редирект #{response.code} на адрес: #{location} ==="
+      fetch_with_redirects(location, limit - 1)
+    else
+      response
+    end
   end
 end
