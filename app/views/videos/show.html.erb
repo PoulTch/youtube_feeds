@@ -1,20 +1,22 @@
-<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px;">
+<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 1040px; margin: 0 auto; padding: 20px; display: flex; flex-direction: column; align-items: center;">
 
-  <!-- Плеер увеличен до 1000px и будет выглядеть масштабнее -->
-  <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000;">
-    <!-- Айфрейм без лишних JS-зависимостей, только чистый старт -->
+  <!-- Контейнер плеера: увеличили первоначальный размер на 10% (было 854x480, стало 940x530) -->
+  <div style="width: 940px; height: 530px; max-width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #000; position: relative;">
+    <!-- Айфрейм теперь занимает ровно это увеличенное пространство -->
     <iframe 
       id="youtube-player"
       src="" 
-      style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none;" 
+      style="width: 100%; height: 100%; border: none;" 
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
       allowfullscreen>
     </iframe>
   </div>
 
-  <h1 style="font-size: 1.8rem; color: #0f0f0f; margin-top: 24px; margin-bottom: 12px; line-height: 1.4; font-weight: bold;">
-    <%= @video.title %>
-  </h1>
+  <!-- Блок с названием и автором сдвигаем по ширине плеера -->
+  <div style="width: 940px; max-width: 100%;">
+    <h1 style="font-size: 1.7rem; color: #0f0f0f; margin-top: 24px; margin-bottom: 12px; line-height: 1.4; font-weight: bold; text-align: left;">
+      <%= @video.title %>
+    </h1>
 
   <!-- БЛОК АВТОРСТВА: Внедряем живую круглую аватарку вместо красной точки -->
   <div style="margin-bottom: 24px; display: flex; align-items: center; gap: 12px;">

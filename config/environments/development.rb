@@ -72,5 +72,5 @@ Rails.application.configure do
   # Настраиваем Rails использовать Solid Queue для фоновых задач в разработке
   config.active_job.queue_adapter = :solid_queue
 
-  config.youtube_api_key = "AIzaSyAQ-goUVc1C0a55k9GUBwvacgC__cnovok"
+  config.youtube_api_key = "placeholder_key"
 end
