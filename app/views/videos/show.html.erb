@@ -1,8 +1,7 @@
-<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px 40px;">
+<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 1260px; margin: 0 auto; padding: 20px 40px;">
 
-  <!-- КРУПНОЕ КИНОТЕАТРАЛЬНОЕ ОКНО ПЛЕЕРА (Увеличено до 1100px на 620px) -->
-  <div style="width: 1100px; height: 620px; max-width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.2); background: #000; position: relative; margin-bottom: 24px;">
-    <!-- Айфрейм занимает ровно это просторное пространство -->
+  <!-- ПЛЕЕР КРУПНЕЕ ЕЩЕ НА ПАРУ САНТИМЕТРОВ (1180px на 664px) -->
+  <div style="width: 1180px; height: 664px; max-width: 100%; border-radius: 16px; overflow: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.2); background: #000; position: relative; margin-bottom: 24px;">
     <iframe 
       id="youtube-player"
       src="" 
@@ -12,8 +11,8 @@
     </iframe>
   </div>
 
-  <!-- ТЕКСТОВЫЙ БЛОК: Выравниваем строго по ширине нашего крупного плеера -->
-  <div style="width: 1100px; max-width: 100%;">
+  <!-- ТЕКСТОВЫЙ БЛОК: Выравниваем под новую ширину -->
+  <div style="width: 1180px; max-width: 100%;">
     <h1 style="font-size: 1.8rem; color: #0f0f0f; margin: 0 0 12px 0; line-height: 1.4; font-weight: bold; text-align: left;">
       <%= @video.title %>
     </h1>
