@@ -67,3 +67,24 @@
   </div>
 
 </div> <!-- Вот теперь этот главный закрывающий тег стоит на своём законном месте! -->
+
+<!-- ИСТИННАЯ МАГИЯ ТУРБО-ОБНОВЛЕНИЯ ПРОГРЕССА ПРИ НАВИГАЦИИ НАЗАД -->
+<script>
+  (function() {
+    // Чистим старые слушатели перед созданием нового, чтобы не было дублей
+    document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
+    
+    window.handleTurboBackRefresh = function(event) {
+      // Если пользователь возвращается назад (action равен restore)
+      if (event.detail.action === "restore") {
+        // Очищаем внутренний кэш Turbo, чтобы он не подсунул старый снимок страницы
+        Turbo.cache.clear();
+        // Даем Turbo команду принудительно обновить страницу с бэкенда!
+        setTimeout(() => { window.location.reload(); }, 50);
+      }
+    };
+
+    document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
+  })();
+</script>
+

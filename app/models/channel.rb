@@ -63,13 +63,13 @@ class Channel < ApplicationRecord
     true
   end
 
-  # Метод для скачивания оригинальной аватарки через ОФИЦИАЛЬНЫЙ YouTube API v3
+  # ОФИЦИАЛЬНЫЙ МЕТОД ОБНОВЛЕНИЯ МЕТАДАННЫХ (АВАТАРКА + ОБЛОЖКА БАННЕРА)
   def fetch_avatar_from_api
     api_key = Rails.application.config.youtube_api_key
     return if api_key.blank? || youtube_channel_id.blank?
 
-    # Стучимся в Google API v3 за метаданными канала
-    url = "https://www.googleapis.com/youtube/v3/channels?part=snippet&id=#{youtube_channel_id}&key=#{api_key}"
+    # Добавляем в part параметр brandingSettings — именно там лежат баннеры-заставки!
+    url = "https://www.googleapis.com/youtube/v3/channels?part=snippet,brandingSettings&id=#{youtube_channel_id}&key=#{api_key}"
 
     begin
       uri = URI.parse(url)
@@ -77,24 +77,35 @@ class Channel < ApplicationRecord
 
       if response.is_a?(Net::HTTPSuccess)
         data = JSON.parse(response.body)
+        item = data.dig("items", 0)
+        return false unless item
 
-        # Безопасно вытаскиваем аватарку самого высокого разрешения (high или medium)
-        avatar_url_from_api = data.dig("items", 0, "snippet", "thumbnails", "high", "url") ||
-                              data.dig("items", 0, "snippet", "thumbnails", "medium", "url") ||
-                              data.dig("items", 0, "snippet", "thumbnails", "default", "url")
+        # 1. Вытаскиваем аватарку
+        avatar_url_from_api = item.dig("snippet", "thumbnails", "high", "url") ||
+                              item.dig("snippet", "thumbnails", "medium", "url")
 
-        if avatar_url_from_api.present?
-          # Жестко пишем её в нашу свежую колонку базы данных PostgreSQL!
-          self.update_columns(avatar_url: avatar_url_from_api)
-          puts "--> [API GOOGLE] Успешно загружен оригинал для: #{self.title}"
+        # 2. Вытаскиваем сочную узкую обложку (баннер) канала
+        banner_url_from_api = item.dig("brandingSettings", "image", "bannerExternalUrl")
+        # Google отдает баннер без параметров, добавим технический хвост для идеального отображения на ПК:
+        banner_url_from_api = "#{banner_url_from_api}=w1060-fcrop64=1,00005a57ffffaa57-k-no-nd-v1" if banner_url_from_api.present?
+
+        # Жестко пишем оба параметра в базу данных PostgreSQL за один микро-запрос!
+        updates = {}
+        updates[:avatar_url] = avatar_url_from_api if avatar_url_from_api.present?
+        updates[:banner_url] = banner_url_from_api if banner_url_from_api.present?
+
+        if updates.any?
+          self.update_columns(updates)
+          puts "--> [API GOOGLE] Успешно обновлены аватарка и БАННЕР для: #{self.title}"
           return true
         end
       end
     rescue => e
-      Rails.logger.error "Ошибка сбора аватарки через YouTube API: #{e.message}"
+      Rails.logger.error "Ошибка сбора метаданных через YouTube API: #{e.message}"
     end
     false
   end
+
 
   # ВОЗВРАЩЕН ИЗ НЕБЫТИЯ: Вспомогательный метод класса для пробития редиректов Гугла
   def self.fetch_with_redirects(url_value, limit = 5)

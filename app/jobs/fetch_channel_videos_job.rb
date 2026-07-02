@@ -8,35 +8,53 @@ class FetchChannelVideosJob < ApplicationJob
     # 1. Робот скачивает свежие видео из RSS
     channel.fetch_videos
 
-    # 2. АВТОМАТИЧЕСКИЙ СБОР ВРЕМЕНИ ДЛЯ НОВЫХ ВИДЕО
-    # Робот находит ролики этого канала, у которых ещё нет длительности, и опрашивает yt-dlp
-    channel.videos.where(duration_seconds: nil).limit(5).each do |video|
-      powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-      ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
-      video_url = "https://youtube.com{video.youtube_video_id}"
+    # 2. АВТОПИЛОТ ВРЕМЕНИ ЧЕРЕЗ GOOGLE API v3:
+    # Находим ролики этого канала, у которых ещё нет длительности
+    api_key = Rails.application.config.youtube_api_key
+    videos_to_update = channel.videos.where(duration_seconds: nil).limit(20)
 
-      cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --get-duration '#{video_url}'\""
+    if api_key.present? && videos_to_update.any?
+      video_ids = videos_to_update.map(&:youtube_video_id).join(",")
+      url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=#{video_ids}&key=#{api_key}"
 
       begin
-        IO.popen(cmd) do |io|
-          duration_str = io.read.strip
-          if duration_str.present?
-            # Парсим строку вида "14:23" или "01:15:30" в чистые секунды
-            parts = duration_str.split(":").map(&:to_i)
-            seconds = case parts.size
-            when 3 then parts[0] * 3600 + parts[1] * 60 + parts[2]
-            when 2 then parts[0] * 60 + parts[1]
-            else parts[0]
+        uri = URI.parse(url)
+        response = Net::HTTP.get_response(uri)
+
+        if response.is_a?(Net::HTTPSuccess)
+          data = JSON.parse(response.body)
+
+          if data["items"].present?
+            data["items"].each do |item|
+              v_id = item["id"]
+              iso_duration = item.dig("contentDetails", "duration") # Строка вида "PT14M23S" или "PT1H5M"
+
+              if iso_duration.present?
+                # Парсим ISO 8601 длительность в чистые секунды
+                seconds = 0
+                match = iso_duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+                if match
+                  hours = match[1].to_i
+                  minutes = match[2].to_i
+                  secs = match[3].to_i
+                  seconds = (hours * 3600) + (minutes * 60) + secs
+                end
+
+                if seconds > 0
+                  video = channel.videos.find_by(youtube_video_id: v_id)
+                  video.update_columns(duration_seconds: seconds) if video
+                  Rails.logger.info "--> [API ВРЕМЯ] Успешно записано #{seconds} сек для: #{v_id}"
+                end
+              end
             end
-            video.update_columns(duration_seconds: seconds) if seconds > 0
           end
         end
       rescue => e
-        Rails.logger.error "Не удалось получить длительность для видео #{video.youtube_video_id}: #{e.message}"
+        Rails.logger.error "!!! Ошибка сбора времени через API: #{e.message}"
       end
     end
 
-    # 3. АВТОПИЛОТ АВАТАРОК: Обновляем оригинальное фото через Google API
+    # 3. Автопилот аватарок: подтягиваем фото автора
     channel.fetch_avatar_from_api
   end
 end

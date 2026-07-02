@@ -13,16 +13,54 @@ class VideosController < ApplicationController
     youtube_id = params[:youtube_channel_id].to_s.strip
 
     if youtube_id.present?
-      channel = Channel.create_by_id(youtube_id)
+      channel = Channel.find_by(youtube_channel_id: youtube_id) || Channel.create_by_id(youtube_id)
+
       if channel
-        # Сначала скачиваем свежие видеоролики автора
+        # 1. Скачиваем свежие видеоролики из RSS
         channel.fetch_videos
 
-        # НАШ МГНОВЕННЫЙ ДЕСАНТ: Качаем оригинальную аватарку из Google API v3!
-        # Теперь ключ берется безопасно из файла .env и не улетит на гитхаб
+        # 2. МГНОВЕННЫЙ ДЕСАНТ ВРЕМЕНИ: Качаем длительность видеороликов через API v3 прямо сейчас!
+        api_key = Rails.application.config.youtube_api_key
+        videos_to_update = channel.videos.where(duration_seconds: nil).limit(20)
+
+        if api_key.present? && videos_to_update.any?
+          video_ids = videos_to_update.map(&:youtube_video_id).join(",")
+          url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=#{video_ids}&key=#{api_key}"
+          begin
+            uri = URI.parse(url)
+            response = Net::HTTP.get_response(uri)
+            if response.is_a?(Net::HTTPSuccess)
+              data = JSON.parse(response.body)
+              if data["items"].present?
+                data["items"].each do |item|
+                  v_id = item["id"]
+                  iso_duration = item.dig("contentDetails", "duration")
+                  if iso_duration.present?
+                    seconds = 0
+                    match = iso_duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
+                    if match
+                      hours   = match[1].to_i
+                      minutes = match[2].to_i
+                      secs    = match[3].to_i
+                      seconds = (hours * 3600) + (minutes * 60) + secs
+                    end
+                    if seconds > 0
+                      v = channel.videos.find_by(youtube_video_id: v_id)
+                      v.update_columns(duration_seconds: seconds) if v
+                    end
+                  end
+                end
+              end
+            end
+          rescue => e
+            Rails.logger.error "Ошибка быстрого сбора времени при создании канала: #{e.message}"
+          end
+        end
+
+        # 3. МГНОВЕННЫЙ СБОР МЕТАДАННЫХ: Качаем оригинальную аватарку и баннер
         channel.fetch_avatar_from_api
 
-        flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Сайдбар и оригинальная аватарка обновлены."
+        flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Все тайминги и оформление на месте."
       else
         flash[:alert] = "Не удалось добавить канал. Проверьте ID."
       end
@@ -30,9 +68,10 @@ class VideosController < ApplicationController
       flash[:alert] = "ID канала не может быть пустым."
     end
 
-    # ИСПРАВЛЕНО: Добавили жесткий редирект, чтобы Opera перерисовала сайдбар без ручного F5!
+    # Жёсткий редирект для мгновенной перерисовки сайдбара
     redirect_to root_path, data: { turbo: false }
   end
+
 
 
   # 3. Страница конкретного одного канала (Вынесена отдельно!)

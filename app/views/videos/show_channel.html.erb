@@ -1,75 +1,117 @@
-<div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px;">
-  
-  <!-- Кнопка возврата назад -->
-  <a href="<%= root_path %>" style="text-decoration: none; color: #606060; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-    ⬅ Назад в общую ленту
-  </a>
-
-  <header style="margin-bottom: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
-    <h1 style="color: #0f0f0f; font-size: 2.5rem; margin: 0;"><%= @channel.title %> 📺</h1>
-    <p style="color: #606060; margin: 0;">Всего видео в базе: <%= @videos.count %></p>
-    
-    <!-- КНОПКА ЗАПУСКА РОБОТА yt-dlp -->
-    <%= button_to fetch_channel_archive_path(@channel), 
-                  method: :post, 
-                  local: true,
-                  data: { turbo: false },
-                  style: "background: #0f0f0f; color: #ffffff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.1s;",
-                  onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
-                  onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
-                  onmousedown: "this.style.transform='scale(0.98)'" do %>
-      🚀 Загрузить весь архив видео через yt-dlp
-    <% end %>
-  </header>
-
-
-  <!-- Сетка для видеороликов конкретного канала -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
-    <% @videos.each do |video| %>
-      <div style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        
-        <!-- Ссылка на плеер вокруг картинки + ВСПЛЫВАЮЩАЯ ПОДСКАЗКА -->
-        <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
-          <% if video.thumbnail_url.present? %>
-            <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
-          <% else %>
-            <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
-          <% end %>
-          
-          <!-- ПЛАШКА ПРОДОЛЖИТЕЛЬНОСТИ РОЛИКА (ПЕРЕНЕСЛИ ВПРАВО: right: 8px) -->
-          <% if video.respond_to?(:duration_seconds) && video.duration_seconds.present? %>
-            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
-              <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
-            </div>
-          <% end %>
-        </a>
-
-        <!-- Контейнер полосы прогресса (серая подложка) -->
-        <div style="width: 100%; height: 4px; background: #e0e0e0; position: relative; margin-top: -4px; z-index: 10;">
-          <!-- Красная линия заполнения (считывает базу + готова к JS) -->
-          <div 
-            data-local-progress="<%= video.youtube_video_id %>"
-            style="width: <%= video.progress_percentage %>%; height: 100%; background: #ff0000; transition: width 0.3s;"
-          ></div>
-        </div>
-
-        <div style="padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
-          <div>
-            <!-- Ссылка на плеер вокруг названия + ВСПЛЫВАЮЩАЯ ПОДСКАЗКА -->
-            <h3 style="margin: 0 0 8px 0; font-size: 1rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-              <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
-                <%= video.title %>
-              </a>
-            </h3>
-          </div>
-          
-          <div style="margin-top: 12px; font-size: 0.8rem; color: #909090;">
-            Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
-          </div>
-        </div>
-        
-      </div>
-    <% end %>
+<!-- ШИКАРНЫЙ ВЕРХНИЙ БАННЕР-ЗАСТАВКА АВТОРА -->
+<% if @channel.banner_url.present? %>
+  <div style="width: 100%; max-width: 1200px; margin: 0 auto 24px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <img src="<%= @channel.banner_url %>" alt="" style="width: 100%; height: 160px; object-fit: cover; display: block;">
   </div>
+<% end %>
+
+<!-- ШАПКА КАНАЛА: Внедряем аватарку вместо телевизора и выравниваем по центру -->
+<header style="margin-bottom: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+  <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0;">
+    <% if @channel.avatar_url.present? %>
+      <img src="<%= @channel.avatar_url %>" alt="" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;">
+    <% else %>
+      <span style="font-size: 2.2rem; flex-shrink: 0;">🔴</span>
+    <% end %>
+    <h1 style="color: #0f0f0f; font-size: 2.5rem; margin: 0; font-weight: bold; line-height: 1.1;"><%= @channel.title %></h1>
+  </div>
+  
+  <p style="color: #606060; margin: 0; font-size: 1rem;">Всего видео в базе: <%= @videos.count %></p>
+  
+  <!-- КНОПКА ЗАПУСКА РОБОТА yt-dlp -->
+  <%= button_to fetch_channel_archive_path(@channel), 
+                method: :post, 
+                local: true,
+                data: { turbo: false },
+                style: "background: #0f0f0f; color: #ffffff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.1s;",
+                onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
+                onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
+                onmousedown: "this.style.transform='scale(0.98)'" do %>
+    🚀 Загрузить весь архив видео через yt-dlp
+  <% end %>
+</header>
+
+<!-- СЕТКА РОЛИКОВ: Жестко зажимаем в аккуратный Grid по 3 или 4 штуки в ряд (минимум 280px на карточку) -->
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+  <% @videos.each do |video| %>
+    <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
+      
+      <!-- ПРЕВЬЮ С ПЛАШКОЙ ВРЕМЕНИ И ПОЛОСОЙ ПРОГРЕССА ПРОСМОТРА -->
+      <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px;">
+        <% if video.thumbnail_url.present? %>
+          <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+        <% else %>
+          <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem;">Нет превью</div>
+        <% end %>
+        
+        <!-- ПЛАШКА ВРЕМЕНИ (В ПРАВОМ УГЛУ) -->
+        <% if video.respond_to?(:duration_seconds) && video.duration_seconds.present? %>
+          <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
+            <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
+          </div>
+        <% end %>
+
+        <!-- КРАСНАЯ ПОЛОСА ПРОГРЕССА ПРОСМОТРА (ВОЗВРАЩЕНА НА МЕСТО) -->
+        <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
+          <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
+          <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
+            <div style="width: <%= progress_percent %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
+          </div>
+        <% end %>
+      </a>
+
+
+      <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
+      <div style="padding: 12px 4px 4px 4px;">
+                <h2 style="font-size: 1rem; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+          <!-- ОСТАВИЛИ ТОЛЬКО НАЗВАНИЕ: убрали громоздкое описание ролика из подсказки -->
+          <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
+            <%= video.title %>
+          </a>
+        </h2>
+
+
+
+        
+        <!-- МИКРО-АВАТАРКА АВТОРСТВА ПОД ПРЕВЬЮ -->
+        <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+          <% if video.channel.avatar_url.present? %>
+            <img src="<%= video.channel.avatar_url %>" alt="" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+          <% else %>
+            <span style="color: #ff0000; font-size: 0.8rem;">🔴</span>
+          <% end %>
+          <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
+            <%= video.channel.title %>
+          </a>
+        </p>
+
+        <p style="margin: 0; font-size: 0.8rem; color: #606060;">
+          <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
+        </p>
+      </div>
+
+    </div>
+  <% end %>
 </div>
+
+<!-- ИСТИННАЯ МАГИЯ ТУРБО-ОБНОВЛЕНИЯ ПРОГРЕССА ПРИ НАВИГАЦИИ НАЗАД -->
+<script>
+  (function() {
+    // Чистим старые слушатели перед созданием нового, чтобы не было дублей
+    document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
+    
+    window.handleTurboBackRefresh = function(event) {
+      // Если пользователь возвращается назад (action равен restore)
+      if (event.detail.action === "restore") {
+        // Очищаем внутренний кэш Turbo, чтобы он не подсунул старый снимок страницы
+        Turbo.cache.clear();
+        // Даем Turbo команду принудительно обновить страницу с бэкенда!
+        setTimeout(() => { window.location.reload(); }, 50);
+      }
+    };
+
+    document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
+  })();
+</script>
+
 
