@@ -2,9 +2,9 @@
 <html>
   <head>
     <title><%= content_for(:title) || "MyChannels" %></title>
-    <!-- ВЕЧНЫЙ НЕУБИВАЕМЫЙ FAVICON ИЗ PUBLIC -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-
+    
+    <!-- ЕДИНСТВЕННЫЙ ИГРОК: ЧЁРНЫЙ ЛОГОТИП ИЗ PUBLIC С ВЕРСИЕЙ v=6 -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=6">
     
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,9 +14,7 @@
 
     <%= yield :head %>
 
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <!-- Все лишние дубликаты icon.png и icon.svg намертво удалены отсюда -->
 
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
@@ -24,6 +22,7 @@
     <!-- Подключаем иконки Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   </head>
+
 
   <body style="margin: 0; padding: 0; background-color: #f9f9f9;">
     
