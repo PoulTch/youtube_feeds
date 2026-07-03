@@ -4,8 +4,13 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # Метод для загрузки каналов в сайдбаре
   def load_sidebar_channels
-    # Достаем все каналы и сортируем по названию от А до Я
-    @sidebar_channels = Channel.order(:title)
+    # МАГИЯ АЛГОРИТМА v2: Безопасный подзапрос (Subquery).
+    # Считает сумму watched_seconds для каждого канала отдельно, не ломая структуру массива.
+    # Самые просматриваемые летят наверх, остальные идут ниже строго по алфавиту.
+    @sidebar_channels = Channel.select("channels.*, COALESCE((SELECT SUM(videos.watched_seconds) FROM videos WHERE videos.channel_id = channels.id), 0) AS total_watch_time")
+                               .order("total_watch_time DESC, channels.title ASC")
+                               .to_a
   end
 end
