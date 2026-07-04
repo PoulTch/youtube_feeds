@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Вход в MyChannels</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+</head>
+<body style="margin: 0; padding: 0; font-family: sans-serif; background: #f9f9f9; display: flex; align-items: center; justify-content: center; height: 100vh;">
+
+  <div style="background: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); width: 100%; max-width: 360px; text-align: center; border: 1px solid #e8e8e8;">
+    
+    <!-- ЛОГОТИП СИСТЕМЫ (ЛОКАЛЬНЫЙ SVG) -->
+    <div style="font-size: 1.8rem; font-weight: bold; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+      <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="#000000" style="width: 32px; height: 32px;"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.3 1.12.3 3.48.3 3.48s0 2.36-.3 3.48a2.02 2.02 0 0 1-1.415 1.419c-1.123.3-5.288.3-6.11.335h-.089c-.822-.003-4.987-.033-6.11-.335a2.02 2.02 0 0 1-1.415-1.419C.3 10.34.3 7.98.3 7.98s0-2.36.3-3.48A2.01 2.01 0 0 1 2.015 2.3c1.123-.3 5.288-.3 6.11-.335zM6.5 5.5v5l4.25-2.5L6.5 5.5z"/></svg>
+      <span style="color: #ff0000;">MyChannels</span>
+    </div>
+
+
+    <!-- СООБЩЕНИЯ ОБ ОШИБКАХ -->
+    <% if flash[:alert] %>
+      <div style="background: #fff5f5; color: #cc0000; padding: 12px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 20px; font-weight: 500; border: 1px solid #ffcccc;">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
+
+    <!-- ФОРМА ВХОДА -->
+    <%= form_with url: login_path, method: :post, local: true, data: { turbo: false } do |f| %>
+      <div style="margin-bottom: 20px; text-align: left;">
+        <label style="display: block; font-size: 0.85rem; color: #606060; font-weight: bold; margin-bottom: 6px;">Имя пользователя</label>
+        <%= f.text_field :username, required: true, style: "width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;", onfocus: "this.style.borderColor='#ff0000'", onblur: "this.style.borderColor='#ccc'" %>
+      </div>
+
+      <div style="margin-bottom: 30px; text-align: left;">
+        <label style="display: block; font-size: 0.85rem; color: #606060; font-weight: bold; margin-bottom: 6px;">Пароль</label>
+        <%= f.password_field :password, required: true, style: "width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;", onfocus: "this.style.borderColor='#ff0000'", onblur: "this.style.borderColor='#ccc'" %>
+      </div>
+
+      <%= f.submit "Войти в систему", style: "width: 100%; background: #0f0f0f; color: #ffffff; border: none; padding: 14px; border-radius: 24px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s, transform 0.1s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);", onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.01)'", onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'", onmousedown: "this.style.transform='scale(0.99)'" %>
+    <% end %>
+
+    <p style="color: #606060; font-size: 0.8rem; margin-top: 30px; line-height: 1.4;">
+      Доступ к персональной ленте ограничен.<br>© MyChannels, 2026.
+    </p>
+
+  </div>
+
+</body>
+</html>

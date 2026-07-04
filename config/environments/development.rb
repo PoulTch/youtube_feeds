@@ -73,4 +73,7 @@ Rails.application.configure do
   config.active_job.queue_adapter = :solid_queue
 
   config.youtube_api_key = ENV["YOUTUBE_API_KEY"]
+
+  # РЕАКТИВНЫЙ ЛОГИН: Облегчаем хеширование паролей BCrypt для моментального входа в WSL
+  ActiveSupport.on_load(:bcrypt_password) { BCrypt::Engine.cost = BCrypt::Engine::MIN_COST }
 end

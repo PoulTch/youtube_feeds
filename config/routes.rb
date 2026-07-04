@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  # НАШИ НОВЫЕ МАРШРУТЫ БЕЗОПАСНОСТИ
+  get  "/login",  to: "sessions#new",     as: :login
+  post "/login",  to: "sessions#create"
+  delete "/logout", to: "sessions#destroy", as: :logout
+
   # Устанавливаем VideosController и его метод index в качестве главной страницы сайта
   root "videos#index"
 

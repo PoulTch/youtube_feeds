@@ -3,8 +3,8 @@
   <head>
     <title><%= content_for(:title) || "MyChannels" %></title>
     
-    <!-- ЕДИНСТВЕННЫЙ ИГРОК: ЧЁРНЫЙ ЛОГОТИП ИЗ PUBLIC С ВЕРСИЕЙ v=6 -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico?v=6">
+    <!-- ЧЕСТНЫЙ ИДЕАЛЬНЫЙ ПУТЬ ДЛЯ FAVICON ИЗ PUBLIC (БЕЗ PROPSHAFT И КЭША) -->
+    <link rel="icon" type="image/png" href="/favicon.ico?v=6">
     
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,49 +14,49 @@
 
     <%= yield :head %>
 
-    <!-- Все лишние дубликаты icon.png и icon.svg намертво удалены отсюда -->
-
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-
-    <!-- Подключаем иконки Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   </head>
 
+  <body style="margin: 0; padding: 0; font-family: sans-serif; background: #f9f9f9; color: #0f0f0f; display: flex; min-height: 100vh;">
 
-  <body style="margin: 0; padding: 0; background-color: #f9f9f9;">
-    
-    <!-- Главный контейнер, делящий экран на лево и право -->
-    <div style="display: flex; font-family: sans-serif; min-height: 100vh;">
+    <!-- СИСТЕМНЫЕ СОВЕРШЕННЫЕ УВЕДОМЛЕНИЯ FLASH -->
+    <% if flash[:notice] %>
+      <div style="position: fixed; top: 20px; right: 20px; background: #0f0f0f; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 9999; font-size: 0.95rem;">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div style="position: fixed; top: 20px; right: 20px; background: #cc0000; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 9999; font-size: 0.95rem;">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ: СТРОГИЙ САЙДБАР СИСТЕМЫ -->
+    <aside style="width: 260px; background: #ffffff; border-right: 1px solid #e8e8e8; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000; overflow-y: auto;">
       
-      <!-- ЛЕВАЯ ПАНЕЛЬ: САЙДБАР (фиксированный слева) -->
-      <aside style="width: 260px; background: #f9f9f9; border-right: 1px solid #e5e5e5; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 100vh; position: fixed; box-sizing: border-box; overflow-y: auto;">
-        
-        <div>
-          <!-- НАШ НОВЫЙ БРЕНДИНГ: MyChannels С ЧЕРНЫМ ЛОГОТИПОМ YOUTUBE -->
-          <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
-            <i class="bi bi-youtube" style="color: #000000; font-size: 1.8rem;"></i>
-            <span style="color: #ff0000;">MyChannels</span>
-          </div>
+      <div>
+        <!-- БРЕНДИНГ: MyChannels С АВТОНОМНЫМ ЧЕРНЫМ SVG-ЛОГОТИПОМ -->
+        <div style="font-size: 1.5rem; font-weight: bold; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;">
+          <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="#000000" style="width: 26px; height: 26px; flex-shrink: 0;"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.3 1.12.3 3.48.3 3.48s0 2.36-.3 3.48a2.02 2.02 0 0 1-1.415 1.419c-1.123.3-5.288.3-6.11.335h-.089c-.822-.003-4.987-.033-6.11-.335a2.02 2.02 0 0 1-1.415-1.419C.3 10.34.3 7.98.3 7.98s0-2.36.3-3.48A2.01 2.01 0 0 1 2.015 2.3c1.123-.3 5.288-.3 6.11-.335zM6.5 5.5v5l4.25-2.5L6.5 5.5z"/></svg>
+          <span style="color: #ff0000;">MyChannels</span>
+        </div>
 
+        <!-- НАВИГАЦИЯ: ОБЩАЯ ЛЕНТА С АВТОНОМНЫМ ЧЕРНЫМ SVG-ДОМИКОМ -->
+        <a href="<%= root_path %>" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0f0f0f; font-weight: bold; font-size: 1.1rem; margin-bottom: 25px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+          <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="#000000" style="width: 18px; height: 18px; flex-shrink: 0;"><path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/><path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/></svg>
+          Общая лента
+        </a>
 
-          <!-- СТРОГАЯ ЧЕРНАЯ ИКОНКА ДЛЯ ОБЩЕЙ ЛЕНТЫ -->
-          <a href="<%= root_path %>" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0f0f0f; font-weight: bold; font-size: 1.1rem; margin-bottom: 25px; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
-            <i class="bi bi-house-door-fill" style="color: #000000; font-size: 1.3rem;"></i>
-            Общая лента
-          </a>
+        <!-- БЛОК МОИ ПОДПИСКИ -->
+        <div style="margin-top: 30px;">
+          <h3 style="font-size: 0.9rem; color: #606060; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; font-weight: bold;">
+            Мои подписки
+          </h3>
 
-
-          <hr style="border: none; border-top: 1px solid #e5e5e5; margin-bottom: 20px;">
-
-          <!-- БЛОК МОИ ПОДПИСКИ -->
-          <div style="margin-top: 30px;">
-            <h3 style="font-size: 0.9rem; color: #606060; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 15px; font-weight: bold;">
-              Мои подписки
-            </h3>
-
-            <!-- 1. ВСЕГДА ВИДИМЫЙ ТОП-10 САМЫХ ПРОСМАТРИВАЕМЫХ КАНАЛОВ -->
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+          <!-- 1. ВСЕГДА ВИДИМЫЙ ТОП-10 САМЫХ ПРОСМАТРИВАЕМЫХ КАНАЛОВ -->
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <% if @sidebar_channels.present? %>
               <% @sidebar_channels.first(10).each do |channel| %>
                 <a href="<%= channel_page_path(channel) %>" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0f0f0f; font-size: 0.95rem; font-weight: 500; transition: background 0.2s; padding: 4px 8px; border-radius: 8px;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='transparent'">
                   <% if channel.avatar_url.present? %>
@@ -67,117 +67,102 @@
                   <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= channel.title %></span>
                 </a>
               <% end %>
-            </div>
-
-            <!-- 2. КНОПКА «РАЗВЕРНУТЬ» ТЕПЕРЬ СТРОГО ПОД ТОП-10 -->
-            <% if @sidebar_channels.size > 10 %>
-              <button onclick="toggleMoreChannels()" id="channels-toggle-btn" style="background: none; border: none; color: #0f0f0f; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 4px 8px; width: 100%; text-align: left;">
-                <i class="bi bi-chevron-down" id="channels-toggle-icon"></i>
-                <span id="channels-toggle-text">Развернуть список</span>
-              </button>
-
-              <!-- 3. СКРЫТЫЙ БЛОК ДЛЯ ВСЕХ ОСТАЛЬНЫХ КАНАЛОВ (НАЧИНАЯ С 11-ГО) -->
-              <div id="hidden-channels-block" style="display: none; flex-direction: column; gap: 12px; margin-top: 12px;">
-                <% @sidebar_channels.drop(10).each do |channel| %>
-                  <a href="<%= channel_page_path(channel) %>" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0f0f0f; font-size: 0.95rem; font-weight: 500; transition: background 0.2s; padding: 4px 8px; border-radius: 8px;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='transparent'">
-                    <% if channel.avatar_url.present? %>
-                      <img src="<%= channel.avatar_url %>" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
-                    <% else %>
-                      <div style="width: 24px; height: 24px; border-radius: 50%; background: #0f0f0f; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold;"><%= channel.title[0..1].upcase %></div>
-                    <% end %>
-                    <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= channel.title %></span>
-                  </a>
-                <% end %>
-              </div>
             <% end %>
           </div>
 
-          <!-- ПРОСТОЙ ОБНОВЛЕННЫЙ СКРИПТ УПРАВЛЕНИЯ КНОПКОЙ -->
-          <script>
-            function toggleMoreChannels() {
-              const block = document.getElementById('hidden-channels-block');
-              const text = document.getElementById('channels-toggle-text');
-              const icon = document.getElementById('channels-toggle-icon');
+          <!-- 2. КНОПКА «РАЗВЕРНУТЬ» СТРОГО ПОД ТОП-10 -->
+          <% if @sidebar_channels.present? && @sidebar_channels.size > 10 %>
+            <button onclick="toggleMoreChannels()" id="channels-toggle-btn" style="background: none; border: none; color: #0f0f0f; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 4px 8px; width: 100%; text-align: left; outline: none;">
+              <span id="channels-toggle-icon">▼</span>
+              <span id="channels-toggle-text">Развернуть список</span>
+            </button>
 
-              if (block.style.display === 'none' || block.style.display === '') {
-                block.style.display = 'flex';
-                text.innerText = 'Свернуть список';
-                icon.className = 'bi bi-chevron-up';
-              } else {
-                block.style.display = 'none';
-                text.innerText = 'Развернуть список';
-                icon.className = 'bi bi-chevron-down';
-              }
-            }
-          </script>
-
-        
-  <!-- НИЖНЯЯ ЧАСТЬ: КНОПКА НАСТРОЕК + МОДАЛЬНОЕ ОКНО -->
-  <div style="margin-top: auto; padding-top: 15px; border-top: 1px solid #e5e5e5;">
-    <!-- Кнопка теперь открывает окно с помощью встроенного JS-метода showModal() -->
-    <button onclick="document.getElementById('settings-dialog').showModal()" style="width: 100%; border: 1px solid #ccc; color: #0f0f0f; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 8px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: background 0.2s; font-size: 0.95rem;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='#fff'">
-      <!-- ИСПРАВЛЕНО: Заменили смайлик на строгую, налитую чёрным цветом иконку из Bootstrap Icons -->
-      <i class="bi bi-gear-fill" style="color: #000000; font-size: 1.1rem; display: inline-flex; align-items: center;"></i>
-      Настройки системы
-    </button>
-
-
-    <!-- САМО ВСПЛЫВАЮЩЕЕ ОКНО (DIALOG) -->
-    <dialog id="settings-dialog" style="border: none; border-radius: 16px; padding: 0; width: 550px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); max-width: 90%; background: #ffffff;">
-      
-      <!-- Шапка окна с кнопкой закрытия -->
-      <div style="background: #f9f9f9; padding: 16px 24px; border-bottom: 1px solid #e5e5e5; display: flex; align-items: center; justify-content: space-between;">
-        <h2 style="margin: 0; font-size: 1.2rem; color: #0f0f0f;">⚙️ Настройки Feeds-Агрегатора</h2>
-        <button onclick="document.getElementById('settings-dialog').close()" style="background: none; border: none; font-size: 1.5rem; color: #aaa; cursor: pointer; line-height: 1; padding: 0 5px;" onmouseover="this.style.color='#0f0f0f'" onmouseout="this.style.color='#aaa'">&times;</button>
-      </div>
-
-      <!-- Внутренности окна (Сюда мы спрятали наши формы управления) -->
-      <div style="padding: 24px; display: flex; flex-direction: column; gap: 24px;">
-        
-        <!-- Форма 1: Добавление одного канала -->
-        <%= form_with url: add_channel_path, method: :post, local: true, data: { turbo: false }, style: "display: flex; flex-direction: column; gap: 8px;" do |f| %>
-          <label style="font-size: 0.9rem; font-weight: bold; color: #606060;">Добавить новый канал по ID:</label>
-          <div style="display: flex; gap: 10px;">
-            <%= f.text_field :youtube_channel_id, autocomplete: "off", placeholder: "Например: UC...", style: "padding: 10px 14px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; flex-grow: 1; box-sizing: border-box;" %>
-            <%= f.submit "Добавить", style: "background: #ff0000; color: #ffffff; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; transition: background 0.2s;", onmouseover: "this.style.background='#cc0000'", onmouseout: "this.style.background='#ff0000'" %>
-          </div>
-        <% end %>
-
-        <hr style="border: none; border-top: 1px solid #e5e5e5; margin: 4px 0;">
-
-        <!-- Форма 2: Массовый импорт подписок -->
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <span style="font-size: 0.9rem; font-weight: bold; color: #606060;">Массовый импорт из YouTube (subscriptions.csv):</span>
-          <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true do |f| %>
-            <label style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #f2f2f2; color: #0f0f0f; padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border: 1px dashed #cccccc; text-align: center; transition: background 0.2s, border-color 0.2s;" onmouseover="this.style.background='#e6e6e6'; this.style.borderColor='#999999'" onmouseout="this.style.background='#f2f2f2'; this.style.borderColor='#cccccc'">
-              📁 Выбрать файл подписок и загрузить
-              <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
-            </label>
+            <!-- 3. СКРЫТЫЙ БЛОК ДЛЯ ОСТАЛЬНОЙ СОТНИ КАНАЛОВ (С 11-ГО ПО МЕТОДУ DROP) -->
+            <div id="hidden-channels-block" style="display: none; flex-direction: column; gap: 12px; margin-top: 12px;">
+              <% @sidebar_channels.drop(10).each do |channel| %>
+                <a href="<%= channel_page_path(channel) %>" style="display: flex; align-items: center; gap: 10px; text-decoration: none; color: #0f0f0f; font-size: 0.95rem; font-weight: 500; transition: background 0.2s; padding: 4px 8px; border-radius: 8px;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='transparent'">
+                  <% if channel.avatar_url.present? %>
+                    <img src="<%= channel.avatar_url %>" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover;">
+                  <% else %>
+                    <div style="width: 24px; height: 24px; border-radius: 50%; background: #0f0f0f; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: bold;"><%= channel.title[0..1].upcase %></div>
+                  <% end %>
+                  <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= channel.title %></span>
+                </a>
+              <% end %>
+            </div>
           <% end %>
         </div>
+      </div>
+
+      <!-- НИЖНИЙ БЛОК: НАСТРОЙКИ СИСТЕМЫ И ВЫХОД -->
+      <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+        
+        <!-- КНОПКА С НАСТОЯЩЕЙ СПЛОШНОЙ ЧЕРНОЙ SVG-ШЕСТЕРЕНКОЙ -->
+        <button onclick="document.getElementById('settings-dialog').showModal()" style="width: 100%; border: 1px solid #ccc; color: #0f0f0f; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 8px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor: pointer; transition: background 0.2s; font-size: 0.95rem; outline: none;" onmouseover="this.style.background='#f2f2f2'" onmouseout="this.style.background='#fff'">
+          <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="#000000" style="width: 18px; height: 18px; flex-shrink: 0;"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.858A2.929 2.929 0 0 1 8 10.93z"/></svg>
+          Настройки системы
+        </button>
+
+        <!-- КНОПКА ВЫХОДА ИЗ АККАУНТА С SVG-ДВЕРЬЮ -->
+        <%= button_to logout_path, 
+                      method: :delete, 
+                      local: true,
+                      data: { turbo: false },
+                      style: "width: 100%; border: 1px solid #ffcccc; color: #cc0000; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border-radius: 8px; background: #fff5f5; cursor: pointer; transition: background 0.2s, transform 0.1s; font-size: 0.95rem; outline: none;",
+                      onmouseover: "this.style.background='#ffe6e6'; this.style.transform='scale(1.01)'",
+                      onmouseout: "this.style.background='#fff5f5'; this.style.transform='scale(1)'",
+                      onmousedown: "this.style.transform='scale(0.99)'" do %>
+          <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="#cc0000" style="width: 18px; height: 18px; flex-shrink: 0;"><path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z"/><path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z"/></svg>
+          Выйти из аккаунта
+        <% end %>
 
       </div>
-    </dialog>
+    </aside>
 
-    <!-- Стили для красивого размытия заднего фона модального окна -->
-    <style>
-      dialog::backdrop {
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(4px);
+    <!-- ОСНОВНАЯ КОНТЕНТНАЯ ЗОНА ПРИЛОЖЕНИЯ -->
+    <main style="margin-left: 260px; padding: 40px; flex-grow: 1; box-sizing: border-box;">
+      <%= yield %>
+    </main>
+
+    <!-- ИНТЕЛЛЕКТУАЛЬНЫЙ СКРИПТ УПРАВЛЕНИЯ РАЗВЕРТЫВАНИЕМ САЙДБАРА -->
+    <script>
+      function toggleMoreChannels() {
+        const block = document.getElementById('hidden-channels-block');
+        const text = document.getElementById('channels-toggle-text');
+        const icon = document.getElementById('channels-toggle-icon');
+
+        if (!block || !text || !icon) return;
+
+        if (block.style.display === 'none' || block.style.display === '') {
+          block.style.display = 'flex';
+          text.innerText = 'Свернуть список';
+          icon.innerText = '▲';
+        } else {
+          block.style.display = 'none';
+          text.innerText = 'Развернуть список';
+          icon.innerText = '▼';
+        }
       }
-    </style>
-  </div>
+    </script>
 
+    <!-- ВОЗВРАЩЕННОЕ МОДАЛЬНОЕ ОКНО НАСТРОЕК СИСТЕМЫ -->
+    <dialog id="settings-dialog" style="border: none; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); width: 100%; max-width: 450px; box-sizing: border-box; background: #ffffff;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.4rem; color: #0f0f0f; font-weight: bold;">⚙️ Настройки MyChannels</h2>
+        <button onclick="document.getElementById('settings-dialog').close()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #606060; font-weight: bold; outline: none;">&times;</button>
+      </div>
 
-      </aside>
+      <!-- ФОРМА ДОБАВЛЕНИЯ НОВОГО БЛОГЕРА (ИСПРАВЛЕНО НА НАШ РЕАЛЬНЫЙ МАРШРУТ) -->
+      <%= form_with url: add_channel_path, method: :post, local: true, data: { turbo: false } do |f| %>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; font-size: 0.85rem; color: #606060; font-weight: bold; margin-bottom: 8px;">ID YouTube канала (например, UC... или @username)</label>
+          <%= f.text_field :youtube_channel_id, required: true, placeholder: "Введите ID или юзернейм автора", style: "width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;", onfocus: "this.style.borderColor='#ff0000'", onblur: "this.style.borderColor='#ccc'" %>
+        </div>
 
-
-      <!-- ПРАВАЯ ПАНЕЛЬ: ОСНОВНОЙ КОНТЕНТ (Сюда подставляются вьюшки) -->
-      <main style="flex-grow: 1; padding: 40px; box-sizing: border-box; overflow-x: hidden;">
-        <%= yield %>
-      </main>
-
-    </div>
+        <%= f.submit "Добавить автора в ленту", style: "width: 100%; background: #0f0f0f; color: #ffffff; border: none; padding: 14px; border-radius: 24px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);", onmouseover: "this.style.background='#333333'", onmouseout: "this.style.background='#0f0f0f'" %>
+      <% end %>
+    </dialog>
 
   </body>
 </html>
+
