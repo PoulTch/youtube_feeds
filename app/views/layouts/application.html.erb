@@ -20,17 +20,18 @@
 
   <body style="margin: 0; padding: 0; font-family: sans-serif; background: #f9f9f9; color: #0f0f0f; display: flex; min-height: 100vh;">
 
-    <!-- СИСТЕМНЫЕ СОВЕРШЕННЫЕ УВЕДОМЛЕНИЯ FLASH -->
+    <!-- СИСТЕМНЫЕ СОВЕРШЕННЫЕ УВЕДОМЛЕНИЯ FLASH (ИСПРАВЛЕНО: СТРОГО ПО ЦЕНТРУ ЭКРАНА) -->
     <% if flash[:notice] %>
-      <div style="position: fixed; top: 20px; right: 20px; background: #0f0f0f; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 9999; font-size: 0.95rem;">
+      <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #0f0f0f; color: #fff; padding: 14px 28px; border-radius: 24px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.95rem; border: 1px solid #333;">
         <%= flash[:notice] %>
       </div>
     <% end %>
     <% if flash[:alert] %>
-      <div style="position: fixed; top: 20px; right: 20px; background: #cc0000; color: #fff; padding: 12px 24px; border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 9999; font-size: 0.95rem;">
+      <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #cc0000; color: #fff; padding: 14px 28px; border-radius: 24px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.95rem;">
         <%= flash[:alert] %>
       </div>
     <% end %>
+
 
     <!-- ЛЕВАЯ ПАНЕЛЬ: СТРОГИЙ САЙДБАР СИСТЕМЫ -->
     <aside style="width: 260px; background: #ffffff; border-right: 1px solid #e8e8e8; padding: 24px 16px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000; overflow-y: auto;">
@@ -161,6 +162,16 @@
 
         <%= f.submit "Добавить автора в ленту", style: "width: 100%; background: #0f0f0f; color: #ffffff; border: none; padding: 14px; border-radius: 24px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);", onmouseover: "this.style.background='#333333'", onmouseout: "this.style.background='#0f0f0f'" %>
       <% end %>
+
+       <div style="padding-top: 20px; border-top: 1px solid #e8e8e8; margin-bottom: 12px;">
+        <span style="display: block; font-size: 0.85rem; font-weight: bold; color: #606060; margin-bottom: 12px;">Массовый импорт из YouTube (subscriptions.csv):</span>
+        <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true, data: { turbo: false } do |f| %>
+          <label style="display: flex; align-items: center; justify-content: center; gap: 8px; background: #f2f2f2; color: #0f0f0f; padding: 12px 16px; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; border: 1px dashed #cccccc; text-align: center; transition: background 0.2s, border-color 0.2s;" onmouseover="this.style.background='#e6e6e6'; this.style.borderColor='#999999'" onmouseout="this.style.background='#f2f2f2'; this.style.borderColor='#cccccc'">
+            📁 Выбрать файл подписок и загрузить
+            <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
+          </label>
+        <% end %>
+      </div>     
     </dialog>
 
   </body>

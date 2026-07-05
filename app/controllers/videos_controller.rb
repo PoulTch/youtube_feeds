@@ -158,19 +158,18 @@ class VideosController < ApplicationController
     redirect_to root_path
   end
 
-  # БРОНЕБОЙНЫЙ ИМПОРТ АРХИВА + УМНЫЙ СБОР АВАТАРОК
+  # БРОНЕБОЙНЫЙ РЕАКТИВНЫЙ ИМПОРТ АРХИВА С ПРИНУДИТЕЛЬНОЙ СВЕРКОЙ GOOGLE API v3
   def fetch_channel_archive
     channel = Channel.find(params[:id])
-    imported_count = 0
+    new_video_ids = []
 
-    # ИСПРАВЛЕНО: Теперь тут строго правильная ссылка на страницу со всеми видеороликами автора!
-    channel_url = "https://www.youtube.com/channel/#{channel.youtube_channel_id}/videos"
+    channel_url = "https://www.youtube.com/channel/#{channel.youtube_channel_id}"
 
     powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
     ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
 
+    # Быстрый flat-playlist для мгновенного сбора ID роликов в массив
     cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --flat-playlist --playlist-end 100 --dump-json '#{channel_url}'\""
-    time_offset = 0
 
     begin
       IO.popen(cmd) do |io|
@@ -183,45 +182,67 @@ class VideosController < ApplicationController
             video_id = video_data["id"]
             video_title = video_data["title"]
 
-            # Искусственная хронология
-            published_at = Time.current - time_offset.hours
-            time_offset += 12
-
-            thumbnail_url = nil
-            if video_data["thumbnails"].present? && video_data["thumbnails"].is_a?(Array)
-              thumbnail_url = video_data["thumbnails"].last["url"]
-            end
-
             if video_id.present?
               video = channel.videos.find_or_initialize_by(youtube_video_id: video_id)
-              video.title = video_title
-              video.published_at = published_at
-              video.thumbnail_url = thumbnail_url
+
+              # ИСПРАВЛЕНО: Безусловно добавляем ID каждого ролика в массив для тотальной сверки через API
+              new_video_ids << video_id
+
+              video.title = video_title if video.title.blank?
+              video.published_at ||= Time.current # Временный маркер, Google API его перепишет через секунду
+
+              if video_data["thumbnails"].present? && video_data["thumbnails"].is_a?(Array)
+                video.thumbnail_url = video_data["thumbnails"].last["url"]
+              end
               video.save!(validate: false)
-              imported_count += 1
             end
           rescue => e
             # Пропускаем битые строки
           end
         end
       end
+
+      # МАГИЯ GOOGLE API v3: Тотально запрашиваем точные даты и русские названия для ВСЕХ найденных видео!
+      if new_video_ids.any?
+        api_key = ENV["YOUTUBE_API_KEY"]
+
+        # Разбиваем массив ID на пачки по 50 штук (лимит Google)
+        new_video_ids.uniq.each_slice(50) do |slice|
+          ids_string = slice.join(",")
+          api_url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=#{ids_string}&key=#{api_key}"
+
+          response = Channel.fetch_with_redirects(api_url)
+          if response && response.is_a?(Net::HTTPSuccess)
+            api_data = JSON.parse(response.body)
+            if api_data["items"].present?
+              api_data["items"].each do |item|
+                v_id = item["id"]
+                snippet = item["snippet"]
+
+                db_video = channel.videos.find_by(youtube_video_id: v_id)
+                if db_video && snippet
+                  # ЖЕСТКАЯ ПЕРЕЗАПИСЬ: Стираем старый хаос и пишем 100% официальную дату Google!
+                  db_video.title = snippet["title"] if snippet["title"].present?
+                  db_video.published_at = snippet["publishedAt"] # ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ ДАТУ ДО СЕКУНДЫ!
+                  db_video.description = snippet["description"] if snippet["description"].present?
+                  db_video.save!(validate: false)
+                end
+              end
+
+            end
+          end
+        end
+      end
+
+      # Выкачиваем оригинальную аватарку автора
+      channel.fetch_avatar_from_api
+
+      flash[:notice] = "Архив успешно синхронизирован с Google API! Проверено роликов: #{new_video_ids.uniq.size}"
+      redirect_to channel_page_path(channel) and return
+
     rescue => e
       flash[:alert] = "Ошибка импорта архива: #{e.message}"
       redirect_to channel_page_path(channel) and return
     end
-
-    # НАШ ТРИУМФАЛЬНЫЙ ФИНАЛ: Запускаем оригинальный сборщик аватарки через yt-dlp!
-    # Он сам выкачает настоящее фото, а если не сможет — оставит DiceBear как страховку.
-    channel.fetch_avatar_from_api
-
-    # Отправляем флеш-уведомление
-    if imported_count > 0
-      flash[:notice] = "Ура! Сетевой мост Windows пробит. Из истории автора «#{channel.title}» успешно загружено роликов: #{imported_count}. Сайдбар и оригинальная аватарка обновлены!"
-    else
-      flash[:notice] = "Все доступные архивные ролики для «#{channel.title}» уже в вашей базе данных! Оригинальная аватарка обновлена."
-    end
-
-    # ЖЕЛЕЗНЫЙ РЕДИРЕКТ С ОТКЛЮЧЕНИЕМ TURBO ДЛЯ ОБНОВЛЕНИЯ САЙДБАРА
-    redirect_to channel_page_path(channel), data: { turbo: false }
   end
 end
