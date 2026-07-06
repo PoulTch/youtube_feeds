@@ -1,12 +1,9 @@
 class VideosController < ApplicationController
-  # 1. Главная страница со всеми видео
+  # 1. Главная страница со всеми видео (ИСПРАВЛЕНО: БЕЗ СКРЫТИЯ ПРОСМОТРЕННЫХ)
   def index
-    # Берем видео, у которых либо нет прогресса, либо просмотрено меньше 90% (оставляем зазор на титры)
-    @videos = Video.includes(:channel)
-                   .where("watched_seconds IS NULL OR watched_seconds < (duration_seconds * 0.9)")
-                   .order(published_at: :desc)
+    # Просто берём все видео всех авторов и выстраиваем их строго по дате публикации от свежих к старым
+    @videos = Video.includes(:channel).order(published_at: :desc)
   end
-
 
   # 2. Обработка формы добавления нового канала
   def create_channel
@@ -36,14 +33,8 @@ class VideosController < ApplicationController
                   v_id = item["id"]
                   iso_duration = item.dig("contentDetails", "duration")
                   if iso_duration.present?
-                    seconds = 0
-                    match = iso_duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
-                    if match
-                      hours   = match[1].to_i
-                      minutes = match[2].to_i
-                      secs    = match[3].to_i
-                      seconds = (hours * 3600) + (minutes * 60) + secs
-                    end
+                    # ИСПРАВЛЕНО: Безопасная официальная магия Rails 8 без MatchData конфликтов!
+                    seconds = ActiveSupport::Duration.parse(iso_duration).to_i
                     if seconds > 0
                       v = channel.videos.find_by(youtube_video_id: v_id)
                       v.update_columns(duration_seconds: seconds) if v
@@ -72,9 +63,7 @@ class VideosController < ApplicationController
     redirect_to root_path, data: { turbo: false }
   end
 
-
-
-  # 3. Страница конкретного одного канала (Вынесена отдельно!)
+  # 3. Страница конкретного одного канала (ИСПРАВЛЕНО: БЕЗ СКРЫТИЯ ПРОСМОТРЕННЫХ)
   def show_channel
     @channel = Channel.find_by(id: params[:id])
 
@@ -83,18 +72,20 @@ class VideosController < ApplicationController
       redirect_to root_path and return
     end
 
-    # Сортируем сначала по дате публикации, а если они одинаковые — по ID видео, чтобы не было хаоса!
-    @videos = @channel.videos
-                      .where("watched_seconds IS NULL OR watched_seconds < (duration_seconds * 0.9)")
-                      .order(published_at: :desc, id: :desc)
+    # Показываем абсолютно все видео автора, сортируя по дате от новых к старым
+    @videos = @channel.videos.order(published_at: :desc, id: :desc)
   end
 
-  # Новый метод для страницы просмотра видео
+  # 4. Новый метод для страницы просмотра видео (ИСПРАВЛЕНО: Защита от nil-ошибок 500)
   def show
-    @video = Video.find(params[:id])
+    @video = Video.find_by(id: params[:id])
+    if @video.nil?
+      flash[:alert] = "К сожалению, этот видеоролик не найден в базе данных."
+      redirect_to root_path and return
+    end
   end
 
-  # Метод вызывается из JS в фоне
+  # 5. Метод вызывается из JS в фоне для сохранения прогресса просмотра
   def save_progress
     video = Video.find(params[:id])
 
@@ -107,8 +98,8 @@ class VideosController < ApplicationController
     head :ok # Отвечаем браузеру, что всё прошло успешно
   end
 
-    # Метод для импорта подписок из CSV-файла YouTube
-    def import_subscriptions
+  # 6. Метод для импорта подписок из CSV-файла YouTube
+  def import_subscriptions
     file = params[:subscriptions_file]
 
     if file.present?
@@ -125,7 +116,7 @@ class VideosController < ApplicationController
 
           # Если ID канала валидный (начинается на UC)
           if youtube_id.present? && youtube_id.start_with?("UC")
-            rss_url = "https://youtube.com/feeds/videos.xml?channel_id=#{youtube_id}"
+            rss_url = "https://www.youtube.com/feeds/videos.xml?channel_id=#{youtube_id}"
 
             channel = Channel.find_or_initialize_by(youtube_channel_id: youtube_id)
             channel.title = title || "Неизвестный канал"
@@ -144,21 +135,21 @@ class VideosController < ApplicationController
         flash[:alert] = "Ошибка при чтении CSV: #{e.message}"
       end
     else
-      flash[:alert] = "Пожалуйста, выберите файл для加载."
+      flash[:alert] = "Пожалуйста, выберите файл для импорта."
     end
 
     redirect_to root_path
   end
 
-  # Метод для удаления канала и всех его видеороликов
+  # 7. Метод для удаления канала и всех его видеороликов (РАБОТАЕТ С ФЛЭШЕМ И КНОПКОЙ ОТПИСКИ)
   def destroy
     @channel = Channel.find(params[:id])
     @channel.destroy # Благодаря dependent: :destroy все видео канала сотрутся автоматически!
-        flash[:notice] = "Канал «#{@channel.title}» и все его видео успешно удалены."
+    flash[:notice] = "Канал «#{@channel.title}» и все его видео успешно удалены."
     redirect_to root_path
   end
 
-  # БРОНЕБОЙНЫЙ РЕАКТИВНЫЙ ИМПОРТ АРХИВА С ПРИНУДИТЕЛЬНОЙ СВЕРКОЙ GOOGLE API v3
+  # 8. БРОНЕБОЙНЫЙ РЕАКТИВНЫЙ ИМПОРТ АРХИВА С ПРИНУДИТЕЛЬНОЙ СВЕРКОЙ GOOGLE API v3
   def fetch_channel_archive
     channel = Channel.find(params[:id])
     new_video_ids = []
@@ -185,7 +176,7 @@ class VideosController < ApplicationController
             if video_id.present?
               video = channel.videos.find_or_initialize_by(youtube_video_id: video_id)
 
-              # ИСПРАВЛЕНО: Безусловно добавляем ID каждого ролика в массив для тотальной сверки через API
+              # Безусловно добавляем ID каждого ролика в массив для тотальной сверки через API
               new_video_ids << video_id
 
               video.title = video_title if video.title.blank?
@@ -218,6 +209,7 @@ class VideosController < ApplicationController
               api_data["items"].each do |item|
                 v_id = item["id"]
                 snippet = item["snippet"]
+                content_details = item["contentDetails"]
 
                 db_video = channel.videos.find_by(youtube_video_id: v_id)
                 if db_video && snippet
@@ -225,10 +217,19 @@ class VideosController < ApplicationController
                   db_video.title = snippet["title"] if snippet["title"].present?
                   db_video.published_at = snippet["publishedAt"] # ПРИНУДИТЕЛЬНО ОБНОВЛЯЕМ ДАТУ ДО СЕКУНДЫ!
                   db_video.description = snippet["description"] if snippet["description"].present?
+
+                  # АПГРЕЙД: Рассчитываем и сохраняем точные секунды для прогресс-баров и плашек времени
+                  if content_details && content_details["duration"].present?
+                    begin
+                      db_video.duration_seconds = ActiveSupport::Duration.parse(content_details["duration"]).to_i
+                    rescue
+                      db_video.duration_seconds = 0
+                    end
+                  end
+
                   db_video.save!(validate: false)
                 end
               end
-
             end
           end
         end

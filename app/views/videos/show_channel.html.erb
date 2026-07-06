@@ -5,8 +5,10 @@
   </div>
 <% end %>
 
-<!-- ШАПКА КАНАЛА: Внедряем аватарку вместо телевизора и выравниваем по центру -->
-<header style="margin-bottom: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+<!-- ШАПКА КАНАЛА: ОЦЕНТРИРОВАНА, С КНОПКОЙ РОБОТА И КНОПКОЙ ОТПИСКИ У САМОГО КРАЯ СПРАВА -->
+<header style="margin-bottom: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+  
+  <!-- Аватарка и Название по центру -->
   <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0;">
     <% if @channel.avatar_url.present? %>
       <img src="<%= @channel.avatar_url %>" alt="" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;">
@@ -18,7 +20,7 @@
   
   <p style="color: #606060; margin: 0; font-size: 1rem;">Всего видео в базе: <%= @videos.count %></p>
   
-  <!-- КНОПКА ЗАПУСКА РОБОТА yt-dlp -->
+  <!-- КНОПКА ЗАПУСКА РОБОТА yt-dlp (СОХРАНЕНА ПО ЦЕНТРУ) -->
   <%= button_to fetch_channel_archive_path(@channel), 
                 method: :post, 
                 local: true,
@@ -29,7 +31,22 @@
                 onmousedown: "this.style.transform='scale(0.98)'" do %>
     🚀 Загрузить весь архив видео через yt-dlp
   <% end %>
+
+  <!-- КНОПКА ОТПИСАТЬСЯ: НАМЕРТВО ПРИЖАТА К ПРАВОМУ КРАЮ ЭКРАНА В ОДНУ ЛИНИЮ С ЛОГОТИПОМ -->
+  <%= button_to delete_channel_path(@channel), 
+                method: :delete, 
+                local: true,
+                data: { turbo: false },
+                onclick: "return confirm('Вы уверены, что хотите отписаться от канала «#{@channel.title}»? Все его видеоролики будут безвозвратно удалены из системы.');",
+                style: "position: absolute; right: 16px; top: 8px; background: #f2f2f2; color: #0f0f0f; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; cursor: pointer; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; gap: 6px; outline: none;",
+                onmouseover: "this.style.background='#cc0000'; this.style.color='#ffffff'",
+                onmouseout: "this.style.background='#f2f2f2'; this.style.color='#0f0f0f'" do %>
+    <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+    Отписаться
+  <% end %>
+
 </header>
+
 
 <!-- СЕТКА РОЛИКОВ: Жестко зажимаем в аккуратный Grid по 3 или 4 штуки в ряд (минимум 280px на карточку) -->
 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; padding: 0 16px;">
@@ -51,13 +68,14 @@
           </div>
         <% end %>
 
-        <!-- КРАСНАЯ ПОЛОСА ПРОГРЕССА ПРОСМОТРА (ВОЗВРАЩЕНА НА МЕСТО) -->
-        <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
-          <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
-          <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
-            <div style="width: <%= progress_percent %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
-          </div>
-        <% end %>
+            <!-- КРАСНАЯ ПОЛОСА ПРОГРЕССА ПРОСМОТРА (ИСПРАВЛЕНО: Защита от скрытия фронтендом) -->
+            <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
+              <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
+              <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
+                <div data-static-progress="<%= video.youtube_video_id %>" style="width: <%= progress_percent %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
+              </div>
+            <% end %>
+
       </a>
 
 
@@ -113,5 +131,8 @@
     document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
   })();
 </script>
+
+
+
 
 

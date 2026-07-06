@@ -40,15 +40,39 @@
     <% end %>
   </div>
 
-  <!-- Магический встроенный скрипт сохранения времени -->
+  <!-- Магический встроенный скрипт сохранения времени с защитой от черного экрана -->
   <script>
     (function() {
       const videoId = "<%= @video.youtube_video_id %>";
-      const savedTime = localStorage.getItem(videoId) || 0;
+      
+      // Читаем время из локального хранилища браузера
+      let savedTime = parseFloat(localStorage.getItem(videoId)) || 0;
+      
+      // Динамически берем длину видеоролика из базы данных Rails
+      const durationSeconds = parseInt("<%= @video.duration_seconds || 0 %>", 10);
+      
+      // ИСПРАВЛЕНО: Сброс на 0 срабатывает строго при 100% просмотре (savedTime >= durationSeconds)
+      if (durationSeconds > 0 && savedTime >= durationSeconds) {
+        savedTime = 0;
+        localStorage.setItem(videoId, 0); // Обнуляем кэш в браузере для повторного просмотра
+      }
+
+      // Инициализируем iframe с правильной стартовой секунды
       const iframe = document.getElementById("youtube-player");
-      iframe.src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0&enablejsapi=1&start=" + Math.round(savedTime);
+      if (iframe) {
+        iframe.src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0&enablejsapi=1&start=" + Math.round(savedTime);
+      }
+
+      // Защита кэша Turbo Drive при навигации назад
+      document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
+      
+      window.handleTurboBackRefresh = function(event) {
+        if (event.detail.action === "restore") {
+          Turbo.cache.clear();
+          setTimeout(() => { window.location.reload(); }, 50);
+        }
+      };
+
+      document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
     })();
   </script>
-
-</div>
-

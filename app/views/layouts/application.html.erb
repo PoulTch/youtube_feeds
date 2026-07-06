@@ -22,12 +22,12 @@
 
     <!-- СИСТЕМНЫЕ СОВЕРШЕННЫЕ УВЕДОМЛЕНИЯ FLASH (ИСПРАВЛЕНО: СТРОГО ПО ЦЕНТРУ ЭКРАНА) -->
     <% if flash[:notice] %>
-      <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #0f0f0f; color: #fff; padding: 14px 28px; border-radius: 24px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.95rem; border: 1px solid #333;">
+      <div class="flash-message" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #0f0f0f; color: #fff; padding: 14px 28px; border-radius: 24px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.95rem; border: 1px solid #333;">
         <%= flash[:notice] %>
       </div>
     <% end %>
     <% if flash[:alert] %>
-      <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #cc0000; color: #fff; padding: 14px 28px; border-radius: 24px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.95rem;">
+      <div class="flash-message" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #cc0000; color: #fff; padding: 14px 28px; border-radius: 24px; font-weight: bold; box-shadow: 0 4px 20px rgba(0,0,0,0.15); z-index: 9999; font-size: 0.95rem;">
         <%= flash[:alert] %>
       </div>
     <% end %>
@@ -144,6 +144,18 @@
           icon.innerText = '▼';
         }
       }
+
+      // СКРИПТ ДЛЯ АВТОМАТИЧЕСКОГО УДАЛЕНИЯ FLASH-СООБЩЕНИЙ ЧЕРЕЗ 5 СЕКУНД
+      document.addEventListener("turbo:load", function() {
+        const messages = document.querySelectorAll('.flash-message');
+        messages.forEach(function(msg) {
+          setTimeout(function() {
+            msg.style.opacity = '0';
+            setTimeout(function() { msg.remove(); }, 500); // Полностью удаляем из HTML после растворения
+          }, 5000); // 5000 миллисекунд = 5 секунд
+        });
+      });
+
     </script>
 
     <!-- ВОЗВРАЩЕННОЕ МОДАЛЬНОЕ ОКНО НАСТРОЕК СИСТЕМЫ -->

@@ -1,17 +1,4 @@
 <div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px;">
-
-  <!-- Блок уведомлений -->
-  <% if flash[:notice] %>
-    <div style="background: #e1f5fe; color: #0288d1; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;">
-      <%= flash[:notice] %>
-    </div>
-  <% end %>
-  <% if flash[:alert] %>
-    <div style="background: #ffebee; color: #c62828; padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold;">
-      <%= flash[:alert] %>
-    </div>
-  <% end %>
-
   <!-- Сетка для видеороликов (Перенесли тег закрытия в самый конец, чтобы сетка была внутри контейнера!) -->
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
     <% @videos.each do |video| %>
@@ -37,7 +24,7 @@
         <div style="width: 100%; height: 4px; background: #e0e0e0; position: relative; margin-top: -4px; z-index: 10;">
           <!-- Красная линия заполнения (считывает базу + готова к JS) -->
           <div 
-            data-local-progress="<%= video.youtube_video_id %>"
+            data-static-progress="<%= video.youtube_video_id %>"
             style="width: <%= video.progress_percentage %>%; height: 100%; background: #ff0000; transition: width 0.3s;"
           ></div>
         </div>
@@ -68,10 +55,10 @@
 
 </div> <!-- Вот теперь этот главный закрывающий тег стоит на своём законном месте! -->
 
-<!-- ИСТИННАЯ МАГИЯ ТУРБО-ОБНОВЛЕНИЯ ПРОГРЕССА ПРИ НАВИГАЦИИ НАЗАД -->
+<!-- ИСТИННАЯ МАГИЯ ТУРБО-ОБНОВЛЕНИЯ ПРОГРЕССА И АВТОМАТИЧЕСКОЙ СИНХРОНИЗАЦИИ ЛЕНТЫ -->
 <script>
   (function() {
-    // Чистим старые слушатели перед созданием нового, чтобы не было дублей
+    // Полностью очищаем старые слушатели, чтобы не плодить дубли
     document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
     
     window.handleTurboBackRefresh = function(event) {
@@ -85,6 +72,17 @@
     };
 
     document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
+    
+    // АВТО-ОБНОВЛЕНИЕ ГЛАВНОЙ ЛЕНТЫ ПРИ УСПЕШНОЙ ОТПРАВКЕ ФОРМ
+    document.removeEventListener("turbo:submit-end", window.handleTurboSubmitRefresh);
+    
+    window.handleTurboSubmitRefresh = function(event) {
+      // Как только любая форма (добавление нового автора, импорт подписок) завершила работу — мгновенно перерисовываем экран без F5!
+      setTimeout(() => { window.location.reload(); }, 100);
+    };
+    
+    document.addEventListener("turbo:submit-end", window.handleTurboSubmitRefresh);
   })();
 </script>
+
 
