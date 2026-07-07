@@ -3,6 +3,8 @@ require "rexml/document"
 
 class Channel < ApplicationRecord
   has_many :videos, dependent: :destroy
+  # ДОБАВЛЕНО: Связь с нашей новой таблицей плейлистов
+  has_many :playlists, dependent: :destroy
 
   # Метод для создания/обновления канала по его ID
   def self.create_by_id(youtube_id)

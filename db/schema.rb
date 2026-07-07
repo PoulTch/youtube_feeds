@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_05_090524) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_07_100935) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,17 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_05_090524) do
     t.datetime "updated_at", null: false
     t.string "avatar_url"
     t.string "banner_url"
+  end
+
+  create_table "playlists", force: :cascade do |t|
+    t.bigint "channel_id", null: false
+    t.string "youtube_playlist_id"
+    t.string "title"
+    t.string "thumbnail_url"
+    t.integer "video_count"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["channel_id"], name: "index_playlists_on_channel_id"
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -164,9 +175,12 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_05_090524) do
     t.integer "watched_seconds"
     t.integer "duration_seconds"
     t.string "duration"
+    t.bigint "playlist_id"
     t.index ["channel_id"], name: "index_videos_on_channel_id"
+    t.index ["playlist_id"], name: "index_videos_on_playlist_id"
   end
 
+  add_foreign_key "playlists", "channels"
   add_foreign_key "solid_queue_blocked_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_claimed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_failed_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
@@ -174,4 +188,5 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_05_090524) do
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "videos", "channels"
+  add_foreign_key "videos", "playlists"
 end

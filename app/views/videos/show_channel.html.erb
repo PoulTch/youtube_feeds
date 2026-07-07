@@ -6,7 +6,7 @@
 <% end %>
 
 <!-- ШАПКА КАНАЛА: ОЦЕНТРИРОВАНА, С КНОПКОЙ РОБОТА И КНОПКОЙ ОТПИСКИ У САМОГО КРАЯ СПРАВА -->
-<header style="margin-bottom: 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+<header style="margin-bottom: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
   
   <!-- Аватарка и Название по центру -->
   <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0;">
@@ -18,9 +18,9 @@
     <h1 style="color: #0f0f0f; font-size: 2.5rem; margin: 0; font-weight: bold; line-height: 1.1;"><%= @channel.title %></h1>
   </div>
   
-  <p style="color: #606060; margin: 0; font-size: 1rem;">Всего видео в базе: <%= @videos.count %></p>
+  <p style="color: #606060; margin: 0; font-size: 1rem;">Всего видео в базе: <%= @channel.videos.count %></p>
   
-  <!-- КНОПКА ЗАПУСКА РОБОТА yt-dlp (СОХРАНЕНА ПО ЦЕНТРУ) -->
+  <!-- КНОПКА ЗАПУСКА РОБОТА -->
   <%= button_to fetch_channel_archive_path(@channel), 
                 method: :post, 
                 local: true,
@@ -32,7 +32,7 @@
     🚀 Загрузить весь архив видео через yt-dlp
   <% end %>
 
-  <!-- КНОПКА ОТПИСАТЬСЯ: НАМЕРТВО ПРИЖАТА К ПРАВОМУ КРАЮ ЭКРАНА В ОДНУ ЛИНИЮ С ЛОГОТИПОМ -->
+  <!-- КНОПКА ОТПИСАТЬСЯ СПРАВА -->
   <%= button_to delete_channel_path(@channel), 
                 method: :delete, 
                 local: true,
@@ -44,94 +44,141 @@
     <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
     Отписаться
   <% end %>
-
 </header>
 
+<!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК -->
+<div style="display: flex; gap: 24px; border-bottom: 2px solid #e8e8e8; margin-bottom: 30px; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+  <a href="<%= channel_page_path(@channel, tab: 'videos') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'videos' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'videos' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+    🎥 Видео
+  </a>
+  <a href="<%= channel_page_path(@channel, tab: 'playlists') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'playlists' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'playlists' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+    📋 Плейлисты
+  </a>
+</div>
 
-<!-- СЕТКА РОЛИКОВ: Жестко зажимаем в аккуратный Grid по 3 или 4 штуки в ряд (минимум 280px на карточку) -->
-<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; padding: 0 16px;">
-  <% @videos.each do |video| %>
-    <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;">
-      
-      <!-- ПРЕВЬЮ С ПЛАШКОЙ ВРЕМЕНИ И ПОЛОСОЙ ПРОГРЕССА ПРОСМОТРА -->
-      <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px;">
-        <% if video.thumbnail_url.present? %>
-          <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
-        <% else %>
-          <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem;">Нет превью</div>
+<!-- ДИНАМИЧЕСКИЙ ВЫВОД КОНТЕНТА В ЗАВИСИМОСТИ ОТ ВКЛАДКИ -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+  
+  <% if @current_tab == 'playlists' %>
+    <!-- ================= ВКЛАДКА ПЛЕЙЛИСТОВ ================= -->
+    <% if @playlists.any? %>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px;">
+        <% @playlists.each do |playlist| %>
+          <div style="display: flex; flex-direction: column; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.04); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            
+            <!-- ОБЛОЖКА-ПАПКА: Теперь ведёт в НАШЕ внутреннее меню! -->
+            <a href="<%= playlist_page_path(playlist) %>" style="position: relative; display: block; aspect-ratio: 16/9; background: #e0e0e0; overflow: hidden; border-radius: 12px;">
+              <% if playlist.thumbnail_url.present? %>
+                <img src="<%= playlist.thumbnail_url %>" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+              <% else %>
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem;">Нет обложки</div>
+              <% end %>
+              <div style="position: absolute; top: 0; right: 0; width: 40%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; gap: 4px; border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
+                <span style="font-size: 1.2rem;">📋</span>
+                <span style="font-size: 0.85rem; font-weight: bold;"><%= playlist.video_count %> видео</span>
+              </div>
+            </a>
+
+            <!-- НАЗВАНИЕ ПЛЕЙЛИСТА: Тоже ведёт к нам в приложение -->
+            <div style="padding: 12px 4px;">
+              <h3 style="margin: 0; font-size: 0.95rem; font-weight: bold; color: #0f0f0f; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                <a href="<%= playlist_page_path(playlist) %>" style="text-decoration: none; color: #0f0f0f;">
+                  <%= playlist.title %>
+                </a>
+              </h3>
+            </div>
+          </div>
+
         <% end %>
-        
-        <!-- ПЛАШКА ВРЕМЕНИ (В ПРАВОМ УГЛУ) -->
-        <% if video.respond_to?(:duration_seconds) && video.duration_seconds.present? %>
-          <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
-            <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
+      </div>
+    <% else %>
+      <!-- Заглушка, если база пуста -->
+      <div style="text-align: center; padding: 50px 20px; color: #606060; border: 1px dashed #ccc; border-radius: 12px; background: #fff;">
+        <span style="font-size: 2.5rem; display: block; margin-bottom: 8px;">📋</span>
+        <h3 style="margin: 0; font-weight: bold; color: #0f0f0f;">Плейлисты ещё не загружены</h3>
+        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Нажмите чёрную кнопку «Загрузить весь архив» выше, чтобы подтянуть официальные плейлисты автора!</p>
+      </div>
+    <% end %>
+
+  <% else %>
+    <!-- ================= СТАНДАРТНАЯ ВКЛАДКА ВИДЕО (СОХРАНЕНА НА 100%) ================= -->
+    <% if @videos.any? %>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+        <% @videos.each do |video| %>
+          <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+            
+            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px;">
+              <% if video.thumbnail_url.present? %>
+                <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+              <% else %>
+                <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem;">Нет превью</div>
+              <% end %>
+              
+              <% if video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
+                <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
+                  <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
+                </div>
+              <% end %>
+
+              <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
+                <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
+                <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
+                  <div style="width: <%= progress_percent %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
+                </div>
+              <% end %>
+            </a>
+
+            <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
+            <div style="padding: 12px 4px 4px 4px;">
+              <h2 style="font-size: 1rem; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
+                  <%= video.title %>
+                </a>
+              </h2>
+              
+              <!-- МИКРО-АВАТАРКА АВТОРСТВА ПОД ПРЕВЬЮ -->
+              <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                <% if video.channel.avatar_url.present? %>
+                  <img src="<%= video.channel.avatar_url %>" alt="" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                <% end %>
+                <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
+                  <%= video.channel.title %>
+                </a>
+              </p>
+
+              <p style="margin: 0; font-size: 0.8rem; color: #606060;">
+                <%= video.published_at.strftime("%d.%m.%Y в %H:%M") if video.published_at %>
+              </p>
+            </div>
+
           </div>
         <% end %>
-
-            <!-- КРАСНАЯ ПОЛОСА ПРОГРЕССА ПРОСМОТРА (ИСПРАВЛЕНО: Защита от скрытия фронтендом) -->
-            <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
-              <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
-              <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
-                <div data-static-progress="<%= video.youtube_video_id %>" style="width: <%= progress_percent %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
-              </div>
-            <% end %>
-
-      </a>
-
-
-      <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
-      <div style="padding: 12px 4px 4px 4px;">
-                <h2 style="font-size: 1rem; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-          <!-- ОСТАВИЛИ ТОЛЬКО НАЗВАНИЕ: убрали громоздкое описание ролика из подсказки -->
-          <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
-            <%= video.title %>
-          </a>
-        </h2>
-
-
-
-        
-        <!-- МИКРО-АВАТАРКА АВТОРСТВА ПОД ПРЕВЬЮ -->
-        <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-          <% if video.channel.avatar_url.present? %>
-            <img src="<%= video.channel.avatar_url %>" alt="" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
-          <% else %>
-            <span style="color: #ff0000; font-size: 0.8rem;">🔴</span>
-          <% end %>
-          <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
-            <%= video.channel.title %>
-          </a>
-        </p>
-
-        <p style="margin: 0; font-size: 0.8rem; color: #606060;">
-          <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
-        </p>
       </div>
-
-    </div>
+    <% else %>
+      <!-- Заглушка, если на вкладке Видео действительно пусто -->
+      <div style="text-align: center; padding: 60px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc; margin-top: 20px;">
+        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📦</span>
+        <h3 style="margin: 0 0 5px 0; font-weight: bold; color: #0f0f0f;">В ленте этого канала пока пусто</h3>
+        <p style="margin: 0; font-size: 0.9rem;">Нажмите чёрную кнопку выше, чтобы проверить наличие новых видеороликов через RSS.</p>
+      </div>
+    <% end %>
   <% end %>
+
 </div>
 
 <!-- ИСТИННАЯ МАГИЯ ТУРБО-ОБНОВЛЕНИЯ ПРОГРЕССА ПРИ НАВИГАЦИИ НАЗАД -->
 <script>
   (function() {
-    // Чистим старые слушатели перед созданием нового, чтобы не было дублей
     document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
-    
     window.handleTurboBackRefresh = function(event) {
-      // Если пользователь возвращается назад (action равен restore)
       if (event.detail.action === "restore") {
-        // Очищаем внутренний кэш Turbo, чтобы он не подсунул старый снимок страницы
         Turbo.cache.clear();
-        // Даем Turbo команду принудительно обновить страницу с бэкенда!
         setTimeout(() => { window.location.reload(); }, 50);
       }
     };
-
     document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
   })();
 </script>
-
 
 
 

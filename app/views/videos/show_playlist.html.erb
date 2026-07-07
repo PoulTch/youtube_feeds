@@ -1,0 +1,50 @@
+<!-- ШАПКА ПЛЕЙЛИСТА -->
+<div style="max-width: 1200px; margin: 0 auto 30px auto; padding: 0 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e8e8e8; padding-bottom: 20px;">
+  <a href="<%= channel_page_path(@channel) %>" style="text-decoration: none; font-size: 1.5rem;" title="Назад к каналу">⬅️</a>
+  <div>
+    <h1 style="margin: 0 0 4px 0; font-size: 2rem; font-weight: bold; color: #0f0f0f;">📋 Сборник: <%= @playlist.title %></h1>
+    <p style="margin: 0; color: #606060; font-size: 0.95rem;">Автор: <strong style="color: #ff0000;"><%= @channel.title %></strong> • Всего видео в папке: <%= @videos.size %></p>
+  </div>
+</div>
+
+<!-- СЕТКА КАРТОЧЕК ПЛЕЙЛИСТА (ОТКРЫВАЮТСЯ В НАШЕМ КРИСТАЛЬНОМ ПЛЕЕРЕ!) -->
+<div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
+  <% if @videos.any? %>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+      <% @videos.each do |video| %>
+        <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+          
+          <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px;">
+            <% if video.thumbnail_url.present? %>
+              <img src="<%= video.thumbnail_url %>" alt="" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+            <% else %>
+              <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
+            <% end %>
+            
+            <% if video.duration_seconds.to_i > 0 %>
+              <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
+                <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
+              </div>
+            <% end %>
+          </a>
+
+          <div style="padding: 12px 4px 4px 4px;">
+            <h2 style="font-size: 1rem; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+              <a href="<%= watch_video_path(video) %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
+                <%= video.title %>
+              </a>
+            </h2>
+            <p style="margin: 0; font-size: 0.8rem; color: #606060;">
+              <%= video.published_at.strftime("%d.%m.%Y") if video.published_at %>
+            </p>
+          </div>
+
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div style="text-align: center; padding: 40px; color: #606060; background: #f9f9f9; border-radius: 12px;">
+      <p style="margin: 0;">Ролики этого плейлиста ещё не синхронизированы. Нажмите кнопку обновления на странице автора.</p>
+    </div>
+  <% end %>
+</div>

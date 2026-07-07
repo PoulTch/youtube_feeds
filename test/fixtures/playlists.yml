@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  channel: one
+  youtube_playlist_id: MyString
+  title: MyString
+  thumbnail_url: MyString
+  video_count: 1
+
+two:
+  channel: two
+  youtube_playlist_id: MyString
+  title: MyString
+  thumbnail_url: MyString
+  video_count: 1
