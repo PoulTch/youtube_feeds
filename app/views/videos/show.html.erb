@@ -60,7 +60,9 @@
       // Инициализируем iframe с правильной стартовой секунды
       const iframe = document.getElementById("youtube-player");
       if (iframe) {
-        iframe.src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0&enablejsapi=1&start=" + Math.round(savedTime);
+        // ДОБАВЛЕНО: &origin=http://localhost:3000 и &playsinline=1 для авторизации JS-потока в браузере!
+        const currentOrigin = window.location.origin;
+        iframe.src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0&enablejsapi=1&playsinline=1&origin=" + encodeURIComponent(currentOrigin) + "&start=" + Math.round(savedTime);
       }
 
       // Защита кэша Turbo Drive при навигации назад

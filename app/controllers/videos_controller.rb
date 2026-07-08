@@ -1,9 +1,17 @@
 class VideosController < ApplicationController
-  # 1. Главная страница со всеми видео (ИСПРАВЛЕНО: БЕЗ СКРЫТИЯ ПРОСМОТРЕННЫХ)
+  # 1. Главная страница со всеми видео + ИЗОЛИРОВАННАЯ ИСТОРИЯ ПРОСМОТРОВ
   def index
-    # Просто берём все видео всех авторов и выстраиваем их строго по дате публикации от свежих к старым
+    # ЖЕСТКИЙ СЕКУНДНЫЙ ЗАЗОР: Ролик улетает из истории строго за 10 секунд до финала!
+    # (duration_seconds - watched_seconds > 10)
+    @history_videos = Video.includes(:channel)
+                           .where("watched_seconds > 0 AND (duration_seconds - watched_seconds) > 10")
+                           .order(updated_at: :desc)
+
+    # Общая лента контента
     @videos = Video.includes(:channel).order(published_at: :desc)
   end
+
+
 
   # 2. Обработка формы добавления нового канала
   def create_channel
