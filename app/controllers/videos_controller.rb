@@ -63,7 +63,7 @@ class VideosController < ApplicationController
     redirect_to root_path, data: { turbo: false }
   end
 
-  # 3. Страница конкретного одного канала (ОТКРЫТЫЙ ВАРИАНТ БЕЗ СКРЫТИЯ ПРОСМОТРЕННЫХ + ПЛЕЙЛИСТЫ)
+  # 3. Страница конкретного одного канала (С ПОДДЕРЖКОЙ ВКЛАДОК И СОРТИРОВКИ ХРОНОЛОГИИ)
   def show_channel
     @channel = Channel.find_by(id: params[:id])
 
@@ -72,25 +72,44 @@ class VideosController < ApplicationController
       redirect_to root_path and return
     end
 
-    # Запоминаем текущую вкладку из параметров ссылки (по умолчанию — "videos")
+    # Запоминаем текущую вкладку (по умолчанию — "videos")
     @current_tab = params[:tab] || "videos"
 
+    # Запоминаем текущую сортировку (по умолчанию — "desc", то есть Новые сверху)
+    @current_sort = params[:sort] || "desc"
+
     if @current_tab == "playlists"
-      # Если пользователь выбрал плейлисты — достаем их из нашей новой таблицы!
       @playlists = @channel.playlists.order(title: :asc)
     else
-      # ИСПРАВЛЕНО: Твой честный открытый вывод ВСЕХ видео автора, без скрытия просмотров!
-      @videos = @channel.videos.order(published_at: :desc, id: :desc)
+      # Переворачиваем запрос в зависимости от нажатой кнопки!
+      if @current_sort == "asc"
+        # Старые: от древних к новым (published_at по возрастанию)
+        @videos = @channel.videos.order(published_at: :asc, id: :asc)
+      else
+        # Новые: от свежих к древним (published_at по убыванию)
+        @videos = @channel.videos.order(published_at: :desc, id: :desc)
+      end
     end
   end
 
-  # Экшен для показа роликов внутри конкретного плейлиста в MyChannels
+
+  # Экшен для показа роликов внутри конкретного плейлиста в MyChannels (С ПОДДЕРЖКОЙ СОРТИРОВКИ)
   def show_playlist
     @playlist = Playlist.find(params[:id])
     @channel = @playlist.channel
-    # Достаем только те видео, которые привязаны к этой папке
-    @videos = @playlist.videos.order(published_at: :desc)
+
+    # Запоминаем текущую сортировку внутри плейлиста (по умолчанию — "desc", Новые сверху)
+    @current_sort = params[:sort] || "desc"
+
+    if @current_sort == "asc"
+      # Старые: выстраиваем ролики папки от 1-го выпуска к свежим
+      @videos = @playlist.videos.order(published_at: :asc, id: :asc)
+    else
+      # Новые: от свежих выпусков к старым
+      @videos = @playlist.videos.order(published_at: :desc, id: :desc)
+    end
   end
+
 
 
   # 4. Новый метод для страницы просмотра видео (ИСПРАВЛЕНО: Защита от nil-ошибок 500)

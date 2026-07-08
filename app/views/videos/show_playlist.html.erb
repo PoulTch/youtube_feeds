@@ -1,5 +1,5 @@
 <!-- ШАПКА ПЛЕЙЛИСТА -->
-<div style="max-width: 1200px; margin: 0 auto 30px auto; padding: 0 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e8e8e8; padding-bottom: 20px;">
+<div style="max-width: 1200px; margin: 0 auto 20px auto; padding: 0 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid #e8e8e8; padding-bottom: 20px;">
   <a href="<%= channel_page_path(@channel) %>" style="text-decoration: none; font-size: 1.5rem;" title="Назад к каналу">⬅️</a>
   <div>
     <h1 style="margin: 0 0 4px 0; font-size: 2rem; font-weight: bold; color: #0f0f0f;">📋 Сборник: <%= @playlist.title %></h1>
@@ -7,7 +7,32 @@
   </div>
 </div>
 
-<!-- СЕТКА КАРТОЧЕК ПЛЕЙЛИСТА (ОТКРЫВАЮТСЯ В НАШЕМ КРИСТАЛЬНОМ ПЛЕЕРЕ!) -->
+<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ ВНУТРИ ПЛЕЙЛИСТА -->
+<div style="display: flex; gap: 12px; margin-bottom: 24px; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+  
+  <!-- Тег: Сначала Новые -->
+  <a href="<%= playlist_page_path(@playlist, sort: 'desc') %>" 
+     style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
+            background: <%= @current_sort == 'desc' ? '#0f0f0f' : '#f2f2f2' %>; 
+            color: <%= @current_sort == 'desc' ? '#ffffff' : '#0f0f0f' %>;"
+     onmouseover="if('<%= @current_sort %>' !== 'desc') this.style.background='#e6e6e6'"
+     onmouseout="if('<%= @current_sort %>' !== 'desc') this.style.background='#f2f2f2'">
+    ✨ Сначала новые
+  </a>
+
+  <!-- Тег: Сначала Старые -->
+  <a href="<%= playlist_page_path(@playlist, sort: 'asc') %>" 
+     style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
+            background: <%= @current_sort == 'asc' ? '#0f0f0f' : '#f2f2f2' %>; 
+            color: <%= @current_sort == 'asc' ? '#ffffff' : '#0f0f0f' %>;"
+     onmouseover="if('<%= @current_sort %>' !== 'asc') this.style.background='#e6e6e6'"
+     onmouseout="if('<%= @current_sort %>' !== 'asc') this.style.background='#f2f2f2'">
+    ⏳ Сначала старые
+  </a>
+
+</div>
+
+<!-- СЕТКА КАРТОЧЕК ПЛЕЙЛИСТА -->
 <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
   <% if @videos.any? %>
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
@@ -26,6 +51,14 @@
                 <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
               </div>
             <% end %>
+            
+            <!-- Полоса локального прогресса -->
+            <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
+              <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
+              <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
+                <div style="width: <%= progress_percent %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
+              </div>
+            <% end %>
           </a>
 
           <div style="padding: 12px 4px 4px 4px;">
@@ -35,7 +68,7 @@
               </a>
             </h2>
             <p style="margin: 0; font-size: 0.8rem; color: #606060;">
-              <%= video.published_at.strftime("%d.%m.%Y") if video.published_at %>
+              <%= video.published_at.strftime("%d.%m.%Y в %H:%M") if video.published_at %>
             </p>
           </div>
 
@@ -48,3 +81,4 @@
     </div>
   <% end %>
 </div>
+

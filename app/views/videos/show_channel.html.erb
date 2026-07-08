@@ -47,7 +47,7 @@
 </header>
 
 <!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК -->
-<div style="display: flex; gap: 24px; border-bottom: 2px solid #e8e8e8; margin-bottom: 30px; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+<div style="display: flex; gap: 24px; border-bottom: 2px solid #e8e8e8; margin-bottom: 20px; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
   <a href="<%= channel_page_path(@channel, tab: 'videos') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'videos' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'videos' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
     🎥 Видео
   </a>
@@ -55,6 +55,34 @@
     📋 Плейлисты
   </a>
 </div>
+
+<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ (Выводится строго на вкладке обычных видео) -->
+<% if @current_tab == 'videos' %>
+  <div style="display: flex; gap: 12px; margin-bottom: 24px; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+    
+    <!-- Тег: Сначала Новые -->
+    <a href="<%= channel_page_path(@channel, tab: 'videos', sort: 'desc') %>" 
+       style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
+              background: <%= @current_sort == 'desc' ? '#0f0f0f' : '#f2f2f2' %>; 
+              color: <%= @current_sort == 'desc' ? '#ffffff' : '#0f0f0f' %>;"
+       onmouseover="if('<%= @current_sort %>' !== 'desc') this.style.background='#e6e6e6'"
+       onmouseout="if('<%= @current_sort %>' !== 'desc') this.style.background='#f2f2f2'">
+      ✨ Сначала новые
+    </a>
+
+    <!-- Тег: Сначала Старые -->
+    <a href="<%= channel_page_path(@channel, tab: 'videos', sort: 'asc') %>" 
+       style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
+              background: <%= @current_sort == 'asc' ? '#0f0f0f' : '#f2f2f2' %>; 
+              color: <%= @current_sort == 'asc' ? '#ffffff' : '#0f0f0f' %>;"
+       onmouseover="if('<%= @current_sort %>' !== 'asc') this.style.background='#e6e6e6'"
+       onmouseout="if('<%= @current_sort %>' !== 'asc') this.style.background='#f2f2f2'">
+      ⏳ Сначала старые
+    </a>
+
+  </div>
+<% end %>
+
 
 <!-- ДИНАМИЧЕСКИЙ ВЫВОД КОНТЕНТА В ЗАВИСИМОСТИ ОТ ВКЛАДКИ -->
 <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
