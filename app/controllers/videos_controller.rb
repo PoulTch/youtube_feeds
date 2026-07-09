@@ -11,14 +11,28 @@ class VideosController < ApplicationController
     @videos = Video.includes(:channel).order(published_at: :desc)
   end
 
-
-
-  # 2. Обработка формы добавления нового канала
+  # 2. Обработка формы добавления нового канала (С ПРОВЕРКОЙ НА ДУБЛИКАТЫ И UX-ПОЛИШИНГОМ)
   def create_channel
     youtube_id = params[:youtube_channel_id].to_s.strip
 
+    # БРОНЕБОЙНЫЙ ПОГРАНИЧНЫЙ КОНТРОЛЬ: Проверяем префикс UC и длину строки строго 24 символа!
+    unless youtube_id.start_with?("UC") && youtube_id.length == 24
+      flash[:alert] = "Неверный формат! Идентификатор канала должен быть длиной 24 символа и начинаться строго с 'UC'."
+      redirect_to root_path, data: { turbo: false } and return
+    end
+
     if youtube_id.present?
-      channel = Channel.find_by(youtube_channel_id: youtube_id) || Channel.create_by_id(youtube_id)
+      # 🎯 УМНАЯ ПРОВЕРКА НА ДУБЛИКАТЫ:
+      existing_channel = Channel.find_by(youtube_channel_id: youtube_id)
+
+      if existing_channel.present?
+        # Если автор уже есть в базе — пишем честный текст и перенаправляем на его страницу!
+        flash[:notice] = "Канал «#{existing_channel.title}» уже есть в вашей системе подписок."
+        redirect_to channel_page_path(existing_channel), data: { turbo: false } and return
+      end
+
+      # Если автора в базе нет — запускаем стандартную процедуру создания
+      channel = Channel.create_by_id(youtube_id)
 
       if channel
         # 1. Скачиваем свежие видеоролики из RSS
@@ -41,7 +55,6 @@ class VideosController < ApplicationController
                   v_id = item["id"]
                   iso_duration = item.dig("contentDetails", "duration")
                   if iso_duration.present?
-                    # ИСПРАВЛЕНО: Безопасная официальная магия Rails 8 без MatchData конфликтов!
                     seconds = ActiveSupport::Duration.parse(iso_duration).to_i
                     if seconds > 0
                       v = channel.videos.find_by(youtube_video_id: v_id)
@@ -60,14 +73,14 @@ class VideosController < ApplicationController
         channel.fetch_avatar_from_api
 
         flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Все тайминги и оформление на месте."
+        redirect_to channel_page_path(channel), data: { turbo: false } and return
       else
-        flash[:alert] = "Не удалось добавить канал. Проверьте ID."
+        flash[:alert] = "Не удалось добавить канал. Проверьте правильность ID."
       end
     else
       flash[:alert] = "ID канала не может быть пустым."
     end
 
-    # Жёсткий редирект для мгновенной перерисовки сайдбара
     redirect_to root_path, data: { turbo: false }
   end
 
@@ -193,17 +206,16 @@ class VideosController < ApplicationController
     redirect_to root_path
   end
 
-  # 8. УЛЬТИМАТИВНЫЙ АВТОНОМНЫЙ КВАДРО-ИМПОРТ С ГАРАНТИРОВАННЫМ НАПОЛНЕНИЕМ ПЛЕЙЛИСТОВ
+  # 8. БРОНЕБОЙНЫЙ РЕАКТИВНЫЙ ИМПОРТ АРХИВА С АВТОМАТИЧЕСКИМ СКАНЕРОМ ПУСТЫХ ТАЙМИНГОВ
   def fetch_channel_archive
     channel = Channel.find(params[:id])
     new_video_ids = []
 
     channel_url = "https://www.youtube.com/channel/#{channel.youtube_channel_id}"
-
     powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
     ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
 
-    # Быстрый flat-playlist для мгновенного сбора ID роликов в массив
+    # 1. Быстрый сбор свежей сотни ID роликов, чтобы мгновенно обновить ленту новинками
     cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --flat-playlist --playlist-end 100 --dump-json '#{channel_url}'\""
 
     begin
@@ -234,46 +246,54 @@ class VideosController < ApplicationController
         end
       end
 
-      # МАГИЯ GOOGLE API v3: Расчет секунд и хронологии
       api_key = ENV["YOUTUBE_API_KEY"]
-      if new_video_ids.any? && api_key.present?
-        new_video_ids.uniq.each_slice(50) do |slice|
-          ids_string = slice.join(",")
-          api_url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet&id=#{ids_string}&key=#{api_key}"
 
-          response = Channel.fetch_with_redirects(api_url)
-          if response && response.is_a?(Net::HTTPSuccess)
-            api_data = JSON.parse(response.body)
-            if api_data["items"].present?
-              api_data["items"].each do |item|
-                v_id = item["id"]
-                snippet = item["snippet"]
-                content_details = item["contentDetails"]
+      if api_key.present?
+        # 🎯 АВТОМАТИЗАЦИЯ: Собираем ID свежей сотни + добавляем ВСЕ ролики этого канала, у которых пустые тайминги!
+        # Это навсегда избавит нас от ручной работы в консоли для старых видео!
+        historic_blank_ids = channel.videos.where(duration_seconds: [ nil, 0 ]).pluck(:youtube_video_id)
 
-                db_video = channel.videos.find_by(youtube_video_id: v_id)
-                if db_video && snippet
-                  db_video.title = snippet["title"] if snippet["title"].present?
-                  db_video.published_at = snippet["publishedAt"]
-                  db_video.description = snippet["description"] if snippet["description"].present?
+        # Склеиваем массивы и убираем дубликаты
+        total_ids_to_sync = (new_video_ids + historic_blank_ids).uniq.compact
 
-                  if content_details && content_details["duration"].present?
-                    begin
-                      db_video.duration_seconds = ActiveSupport::Duration.parse(content_details["duration"]).to_i
-                    rescue
-                      db_video.duration_seconds = 0
+        # 2. ПАКЕТНАЯ СИНХРОНИЗАЦИЯ С GOOGLE API v3 (Пачками по 50 штук)
+        if total_ids_to_sync.any?
+          total_ids_to_sync.each_slice(50) do |slice|
+            ids_string = slice.join(",")
+            api_url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=#{ids_string}&key=#{api_key}"
+
+            response = Channel.fetch_with_redirects(api_url)
+            if response && response.is_a?(Net::HTTPSuccess)
+              api_data = JSON.parse(response.body)
+              if api_data["items"].present?
+                api_data["items"].each do |item|
+                  v_id = item["id"]
+                  snippet = item["snippet"]
+                  content_details = item["contentDetails"]
+
+                  db_video = channel.videos.find_by(youtube_video_id: v_id)
+                  if db_video && snippet
+                    db_video.title = snippet["title"] if snippet["title"].present?
+                    db_video.published_at = snippet["publishedAt"]
+                    db_video.description = snippet["description"] if snippet["description"].present?
+
+                    if content_details && content_details["duration"].present?
+                      begin
+                        db_video.duration_seconds = ActiveSupport::Duration.parse(content_details["duration"]).to_i
+                      rescue
+                        db_video.duration_seconds = 0
+                      end
                     end
+
+                    db_video.save!(validate: false)
                   end
-                  db_video.save!(validate: false)
                 end
               end
             end
           end
         end
-      end
 
-      # МАГИЯ ОФИЦИАЛЬНЫХ ПЛЕЙЛИСТОВ + ПРИНУДИТЕЛЬНЫЙ ДЕСАНТ ПО СУЩЕСТВУЮЩИМ ПАПКАМ
-      if api_key.present?
-        # 1-й проход: Пробуем собрать публичные плейлисты
+        # 3. ИМПОРТ ОФИЦИАЛЬНЫХ ПЛЕЙЛИСТОВ
         playlists_url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=#{channel.youtube_channel_id}&maxResults=50&key=#{api_key}"
         begin
           playlists_response = Channel.fetch_with_redirects(playlists_url)
@@ -288,74 +308,62 @@ class VideosController < ApplicationController
                 if p_id.present? && snippet
                   playlist = channel.playlists.find_or_initialize_by(youtube_playlist_id: p_id)
                   playlist.title = snippet["title"]
-                  playlist.thumbnail_url = snippet.dig("thumbnails", "high", "url") || snippet.dig("thumbnails", "default", "url")
-                  playlist.video_count = content_details["itemCount"].to_i if content_details
+
+                  if snippet["thumbnails"].present?
+                    thumb_data = snippet["thumbnails"]["maxres"] || snippet["thumbnails"]["high"] || snippet["thumbnails"]["medium"] || snippet["thumbnails"]["default"]
+                    playlist.thumbnail_url = thumb_data["url"] if thumb_data
+                  end
+
+                  if content_details && content_details["itemCount"].present?
+                    playlist.video_count = content_details["itemCount"].to_i
+                  end
+
                   playlist.save!(validate: false)
+
+                  # Глубокая пагинация роликов плейлиста
+                  next_page_token = nil
+                  loop do
+                    page_param = next_page_token.present? ? "&pageToken=#{next_page_token}" : ""
+                    items_url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=#{p_id}&maxResults=50#{page_param}&key=#{api_key}"
+
+                    items_response = Channel.fetch_with_redirects(items_url)
+                    break unless items_response && items_response.is_a?(Net::HTTPSuccess)
+
+                    items_data = JSON.parse(items_response.body)
+                    next_page_token = items_data["nextPageToken"]
+
+                    if items_data["items"].present?
+                      items_data["items"].each do |pi_item|
+                        pv_id = pi_item.dig("snippet", "resourceId", "videoId")
+                        pv_title = pi_item.dig("snippet", "title")
+
+                        if pv_id.present?
+                          p_video = channel.videos.find_or_initialize_by(youtube_video_id: pv_id)
+                          p_video.title = pv_title if p_video.title.blank?
+                          p_video.playlist_id = playlist.id
+                          p_video.published_at ||= pi_item.dig("snippet", "publishedAt") || Time.current
+
+                          if pi_item.dig("snippet", "thumbnails").present?
+                            p_thumb = pi_item.dig("snippet", "thumbnails", "high", "url") || pi_item.dig("snippet", "thumbnails", "default", "url")
+                            p_video.thumbnail_url ||= p_thumb
+                          end
+                          p_video.save!(validate: false)
+                        end
+                      end
+                    end
+                    break if next_page_token.blank?
+                  end
                 end
               end
             end
           end
         rescue => e
-          Rails.logger.error "Ошибка первого прохода плейлистов: #{e.message}"
+          Rails.logger.error "Ошибка автоматического сбора плейлистов: #{e.message}"
         end
-
-        # 2-й проход: ГАРАНТИРОВАННОЕ ГЛУБОКОЕ НАПОЛНЕНИЕ С ПАГИНАЦИЕЙ СТРАНИЦ GOOGLE API!
-        channel.playlists.each do |playlist|
-          next_page_token = nil
-
-          # Запускаем цикл, который будет крутиться, пока у Гугла не кончатся страницы с роликами
-          loop do
-            page_param = next_page_token.present? ? "&pageToken=#{next_page_token}" : ""
-            items_url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=#{playlist.youtube_playlist_id}&maxResults=50#{page_param}&key=#{api_key}"
-
-            begin
-              items_response = Channel.fetch_with_redirects(items_url)
-              break unless items_response && items_response.is_a?(Net::HTTPSuccess)
-
-              items_data = JSON.parse(items_response.body)
-
-              # Запоминаем токен следующей страницы
-              next_page_token = items_data["nextPageToken"]
-
-              if items_data["items"].present?
-                items_data["items"].each do |pi_item|
-                  pv_id = pi_item.dig("snippet", "resourceId", "videoId")
-                  pv_title = pi_item.dig("snippet", "title")
-
-                  if pv_id.present?
-                    p_video = channel.videos.find_or_initialize_by(youtube_video_id: pv_id)
-                    p_video.title = pv_title if p_video.title.blank?
-                    p_video.playlist_id = playlist.id # Намертво привязываем видеоролик к папке!
-                    p_video.published_at ||= pi_item.dig("snippet", "publishedAt") || Time.current
-
-                    if pi_item.dig("snippet", "thumbnails").present?
-                      p_thumb = pi_item.dig("snippet", "thumbnails", "high", "url") || pi_item.dig("snippet", "thumbnails", "default", "url")
-                      p_video.thumbnail_url ||= p_thumb
-                    end
-                    p_video.save!(validate: false)
-                  end
-                end
-              end
-
-              # Если следующей страницы у плейлиста нет — останавливаем бесконечный цикл
-              break if next_page_token.blank?
-
-            rescue => e
-              Rails.logger.error "Ошибка пагинации для плейлиста #{playlist.title}: #{e.message}"
-              break
-            end
-          end
-
-          # После того как выкачали абсолютно все страницы — обновляем счетчик видео в базе
-          playlist.update_columns(video_count: playlist.videos.count)
-        end
-
       end
 
-      # Выкачиваем оригинальную аватарку автора
       channel.fetch_avatar_from_api
-
-      flash[:notice] = "Автономный квадро-архив успешно обновлен! Все папки заполнились контентом."
+      flash[:notice] = "Архив успешно обновлен! Все старые и новые тайминги синхронизированы автоматически."
       redirect_to channel_page_path(channel) and return
 
     rescue => e
