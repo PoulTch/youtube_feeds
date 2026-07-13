@@ -97,32 +97,16 @@
           </div>
           
           <div style="margin-top: 12px; font-size: 0.8rem; color: #909090;">
-            Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") if video.published_at %>
+            <% if video.published_at.present? && video.published_at.respond_to?(:strftime) %>
+              Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
+            <% else %>
+              Опубликовано: Скоро (Анонс)
+            <% end %>
           </div>
         </div>
-        
+
       </div>
     <% end %>
   </div>
 
 </div>
-
-<!-- НАША ИСТИННАЯ МАГИЯ ТУРБО-ОБНОВЛЕНИЯ -->
-<script>
-  (function() {
-    document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
-    window.handleTurboBackRefresh = function(event) {
-      if (event.detail.action === "restore") {
-        Turbo.cache.clear();
-        setTimeout(() => { window.location.reload(); }, 50);
-      }
-    };
-    document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
-    
-    document.removeEventListener("turbo:submit-end", window.handleTurboSubmitRefresh);
-    window.handleTurboSubmitRefresh = function(event) {
-      setTimeout(() => { window.location.reload(); }, 100);
-    };
-    document.addEventListener("turbo:submit-end", window.handleTurboSubmitRefresh);
-  })();
-</script>

@@ -1,0 +1,22 @@
+name: Deploy MyChannels to VPS
+on:
+  push:
+    branches: [ main ] # Сработает автоматически при каждом git push в ветку main!
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: 77.91.78.106
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }} # GitHub сам возьмет ключ из настроек!
+          script: |
+            cd ~/app
+            git pull origin main
+            bundle install
+            RAILS_ENV=production bundle exec rails db:migrate
+            RAILS_ENV=production bundle exec rails assets:precompile
+            sudo systemctl restart rails-app rails-worker

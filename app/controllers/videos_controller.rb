@@ -151,7 +151,7 @@ class VideosController < ApplicationController
       watched_seconds: params[:current_time],
       duration_seconds: params[:total_time]
     )
-
+    Rails.cache.delete("sidebar_channels_user_#{session[:user_id]}")
     head :ok # Отвечаем браузеру, что всё прошло успешно
   end
 

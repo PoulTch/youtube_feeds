@@ -193,21 +193,3 @@
   <% end %>
 
 </div>
-
-<!-- ИСТИННАЯ МАГИЯ ТУРБО-ОБНОВЛЕНИЯ ПРОГРЕССА ПРИ НАВИГАЦИИ НАЗАД -->
-<script>
-  (function() {
-    document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
-    window.handleTurboBackRefresh = function(event) {
-      if (event.detail.action === "restore") {
-        Turbo.cache.clear();
-        setTimeout(() => { window.location.reload(); }, 50);
-      }
-    };
-    document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
-  })();
-</script>
-
-
-
-

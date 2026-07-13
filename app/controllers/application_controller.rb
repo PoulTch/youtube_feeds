@@ -20,10 +20,12 @@ class ApplicationController < ActionController::Base
   end
   helper_method :current_user
 
-  # Метод для загрузки каналов в сайдбаре (ОДИН, БЕЗ ДУБЛИКАТОВ)
   def load_sidebar_channels
-    @sidebar_channels = Channel.select("channels.*, COALESCE((SELECT SUM(videos.watched_seconds) FROM videos WHERE videos.channel_id = channels.id), 0) AS total_watch_time")
-                               .order("total_watch_time DESC, channels.title ASC")
-                               .to_a
+    # Кэшируем сайдбар на 5 минут. Rails посчитает его один раз, а потом будет отдавать мгновенно!
+    @sidebar_channels = Rails.cache.fetch("sidebar_channels_user_#{session[:user_id]}", expires_in: 5.minutes) do
+      Channel.select("channels.*, COALESCE((SELECT SUM(videos.watched_seconds) FROM videos WHERE videos.channel_id = channels.id), 0) AS total_watch_time")
+            .order("total_watch_time DESC, channels.title ASC")
+            .to_a
+    end
   end
 end
