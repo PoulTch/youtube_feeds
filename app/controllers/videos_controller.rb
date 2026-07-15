@@ -1,4 +1,7 @@
 class VideosController < ApplicationController
+  # Отключаем проверку токена для сохранения секунд, так как запросы идут фоном через JS
+  skip_before_action :verify_authenticity_token, only: [ :save_progress ]
+
   # 1. Главная страница со всеми видео + ИЗОЛИРОВАННАЯ ИСТОРИЯ ПРОСМОТРОВ
   def index
     # Берем видео с просмотрами и фильтруем через Ruby (вычитание гарантированно сработает)
