@@ -65,3 +65,5 @@ end
 gem "csv"
 
 gem "pagy", "~> 43.6"
+
+gem "rexml", "~> 3.4"
