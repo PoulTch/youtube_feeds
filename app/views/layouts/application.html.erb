@@ -166,12 +166,13 @@
       </div>
 
       <!-- ФОРМА ДОБАВЛЕНИЯ НОВОГО БЛОГЕРА (С СУПЕР-ЧЕТКИМ ВВОДОМ ID 'UC') -->
-      <%= form_with url: add_channel_path, method: :post, local: true, data: { turbo: false }, autocomplete: "off" do |f| %>
+      <%= form_with url: add_channel_path, method: :post, local: true, data: { turbo: false } do |f| %>
         <div style="margin-bottom: 20px;">
           <label style="display: block; font-size: 0.85rem; color: #0f0f0f; font-weight: bold; margin-bottom: 6px;">ID YouTube канала:</label>
           <%= f.text_field :youtube_channel_id, 
                            required: true, 
-                           placeholder: "Например: UC_x5XG1OV2P6uZZ5...", 
+                           placeholder: "Например: UC_x5XG1OV2P6uZZ5...",
+                           autocomplete: "off", 
                            style: "width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.2s;", 
                            onfocus: "this.style.borderColor='#ff0000'", 
                            onblur: "this.style.borderColor='#ccc'" %>
