@@ -2,15 +2,16 @@ class VideosController < ApplicationController
   # 1. Главная страница со всеми видео + ИЗОЛИРОВАННАЯ ИСТОРИЯ ПРОСМОТРОВ
   def index
     # ЖЕСТКИЙ СЕКУНДНЫЙ ЗАЗОР: Ролик улетает из истории строго за 10 секунд до финала!
-    # (duration_seconds - watched_seconds > 10)
     @history_videos = Video.includes(:channel)
                            .where("watched_seconds > 0 AND (duration_seconds - watched_seconds) > 10")
                            .order(updated_at: :desc)
 
-    # Общая лента контента с новым синтаксисом Pagy (по 20 видео)
-    @pagy, @videos = pagy(:offset, Video.includes(:channel).order(published_at: :desc), limit: 20)
-  end
+    # ИЗОЛИРУЕМ общую ленту: сначала строим чистый SQL-запрос
+    videos_relation = Video.includes(:channel).order(published_at: :desc)
 
+    # Применяем пагинацию СТРОГО к этому изолированному запросу
+    @pagy, @videos = pagy(:offset, videos_relation, limit: 20)
+  end
 
   # 2. Обработка формы добавления нового канала (С ПРОВЕРКОЙ НА ДУБЛИКАТЫ И UX-ПОЛИШИНГОМ)
   def create_channel
