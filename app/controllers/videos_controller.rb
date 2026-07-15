@@ -1,17 +1,19 @@
 class VideosController < ApplicationController
   # 1. Главная страница со всеми видео + ИЗОЛИРОВАННАЯ ИСТОРИЯ ПРОСМОТРОВ
   def index
-    # ЖЕСТКИЙ СЕКУНДНЫЙ ЗАЗОР: Ролик улетает из истории строго за 10 секунд до финала!
+    # Берем видео с просмотрами и фильтруем через Ruby (вычитание гарантированно сработает)
     @history_videos = Video.includes(:channel)
-                           .where("watched_seconds > 0 AND (duration_seconds - watched_seconds) > 10")
+                           .where("watched_seconds > 0")
                            .order(updated_at: :desc)
+                           .select { |v| v.duration_seconds && v.watched_seconds && (v.duration_seconds - v.watched_seconds) > 10 }
 
-    # ИЗОЛИРУЕМ общую ленту: сначала строим чистый SQL-запрос
+    # ИЗОЛИРУЕМ общую ленту
     videos_relation = Video.includes(:channel).order(published_at: :desc)
 
-    # Применяем пагинацию СТРОГО к этому изолированному запросу
+    # Применяем пагинацию СТРОГО к общей ленте
     @pagy, @videos = pagy(:offset, videos_relation, limit: 20)
   end
+
 
   # 2. Обработка формы добавления нового канала (С ПРОВЕРКОЙ НА ДУБЛИКАТЫ И UX-ПОЛИШИНГОМ)
   def create_channel
