@@ -63,3 +63,5 @@ group :test do
 end
 
 gem "csv"
+
+gem "pagy", "~> 43.6"

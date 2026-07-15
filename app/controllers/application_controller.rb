@@ -1,4 +1,6 @@
 class ApplicationController < ActionController::Base
+  include Pagy::Method
+
   # 1. СТРОГО НА ПЕРВОМ МЕСТЕ: Сначала проверяем, вошел ли пользователь
   before_action :check_login
 

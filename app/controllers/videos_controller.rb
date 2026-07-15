@@ -7,9 +7,10 @@ class VideosController < ApplicationController
                            .where("watched_seconds > 0 AND (duration_seconds - watched_seconds) > 10")
                            .order(updated_at: :desc)
 
-    # Общая лента контента
-    @videos = Video.includes(:channel).order(published_at: :desc)
+    # Общая лента контента с новым синтаксисом Pagy (по 20 видео)
+    @pagy, @videos = pagy(:offset, Video.includes(:channel).order(published_at: :desc), limit: 20)
   end
+
 
   # 2. Обработка формы добавления нового канала (С ПРОВЕРКОЙ НА ДУБЛИКАТЫ И UX-ПОЛИШИНГОМ)
   def create_channel

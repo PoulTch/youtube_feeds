@@ -8,3 +8,58 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+ /* Контейнер пагинации Pagy */
+.youtube-pagination nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Все кнопки и ссылки пагинации */
+.youtube-pagination nav a, 
+.youtube-pagination nav span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 6px;
+  border-radius: 20px; /* Круглые кнопки */
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  background-color: #272727; /* Темный фон кнопок YouTube */
+  color: #f1f1f1; /* Белый текст */
+  transition: background-color 0.2s, transform 0.1s;
+  box-sizing: border-box;
+}
+
+/* Эффект при наведении на доступные страницы */
+.youtube-pagination nav a:hover {
+  background-color: #3f3f3f;
+}
+
+/* Активная страница (на которой сейчас находится пользователь) */
+.youtube-pagination nav span.current {
+  background-color: #f1f1f1; /* Инверсия: белый фон */
+  color: #0f0f0f; /* Черный текст */
+  font-weight: bold;
+}
+
+/* Точки перехода (...) */
+.youtube-pagination nav span.gap {
+  background-color: transparent;
+  color: #aaa;
+}
+
+/* Активная страница в фирменном красном стиле */
+.youtube-pagination nav a[aria-current="page"] {
+  background-color: #ff0000 !important; /* Насыщенный красный YouTube */
+  color: #ffffff !important;            /* Белый текст */
+  font-weight: bold !important;
+  cursor: default !important;           
+}
+
+
+
