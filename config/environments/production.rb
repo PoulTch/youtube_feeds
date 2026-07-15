@@ -89,4 +89,7 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
   # Разрешаем отправку форм при конфликте HTTP/HTTPS Origin заголовков
   config.action_controller.forgery_protection_origin_check = false
+
+  # Передаем API ключ YouTube в конфигурацию приложения
+  config.youtube_api_key = ENV["YOUTUBE_API_KEY"]
 end
