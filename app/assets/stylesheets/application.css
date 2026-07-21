@@ -798,6 +798,85 @@ body {
   }
 }
 
+/* ==========================================================================
+   8. СТРАНИЦА ПРОСМОТРА ВИДЕО (ИНТЕРФЕЙС YOUTUBE)
+   ========================================================================== */
+
+/* На мобилках плеер прижимаем вплотную к краям экрана, как на YT */
+@media (max-width: 768px) {
+  .app-main:has(.video-player) {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 56px !important; /* только отступ под мобильную шапку */
+  }
+  
+  .video-player {
+    border-radius: 0 !important; /* Убираем скругления на мобилке */
+    margin-bottom: 12px !important;
+  }
+  
+  .video-title, .video-meta-block, .video-description-box {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+/* Новое адаптивное поле описания в стиле YouTube */
+.video-description-box {
+  background: #f2f2f2;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: #0f0f0f;
+  line-height: 1.5;
+  margin-top: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.video-description-box:hover {
+  background: #e6e6e6;
+}
+
+/* Текст описания: ГАРАНТИРОВАННО переносит любые длинные ссылки и слова */
+.video-description-text {
+  white-space: pre-wrap;
+  word-break: break-word; /* Железный перенос длинных строк! */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* По умолчанию показываем только 2 строки */
+  -webkit-box-orient: vertical;
+}
+
+/* Класс, который снимет ограничение строк при клике на "Ещё" */
+.video-description-box.expanded .video-description-text {
+  display: block;
+  -webkit-line-clamp: unset;
+}
+
+/* Кнопка "Ещё" */
+.more-btn {
+  font-weight: bold;
+  color: #0f0f0f;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+/* Блок счетчиков: просмотры, лайки, дата */
+.video-stats-inline {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #0f0f0f;
+  margin-bottom: 8px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.video-stats-inline span {
+  color: #606060;
+  font-weight: normal;
+}
+
+
 
 
 

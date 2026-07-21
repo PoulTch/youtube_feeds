@@ -11,14 +11,32 @@
   </div>
 
 
-  <!-- ТЕКСТОВЫЙ БЛОК: Новый адаптивный класс вместо жестких 1180px -->
+  <!-- ТЕКСТОВЫЙ БЛОК -->
   <div class="video-info-block">
     <h1 class="video-title">
       <%= @video.title %>
     </h1>
 
-    <!-- БЛОК АВТОРСТВА: Новый класс для адаптивного выравнивания -->
-    <div class="video-meta-block">
+    <!-- НОВОЕ ОПИСАНИЕ В СТИЛЕ YOUTUBE (С КЛИКОМ ДЛЯ РАЗВЕРТЫВАНИЯ) -->
+    <% if @video.description.present? %>
+      <!-- При клике на этот блок он будет разворачиваться -->
+      <div class="video-description-box" onclick="toggleDescription(this)">
+        
+        <!-- Ряд счетчиков перед текстом (Просмотры и лайки пока статичные) -->
+        <div class="video-stats-inline">
+          12 тыс. просмотров <span>•</span> 👍 1.4 тыс. <span>•</span> 
+          <%= @video.published_at.strftime("%d.%m.%Y") %>
+        </div>
+
+        <div class="video-description-text" id="desc-text">
+          <%= @video.description %>
+        </div>
+        <span class="more-btn" id="more-btn">...еще</span>
+      </div>
+    <% end %>
+
+    <!-- БЛОК АВТОРСТВА (Спустили под описание, как в новом интерфейсе YT) -->
+    <div class="video-meta-block" style="margin-top: 20px;">
       <a href="<%= channel_page_path(@video.channel) %>" style="text-decoration: none; display: flex; align-items: center; gap: 10px; color: #ff0000; font-weight: bold; font-size: 1.1rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
         <% if @video.channel.avatar_url.present? %>
           <img src="<%= @video.channel.avatar_url %>" alt="" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
@@ -27,46 +45,28 @@
         <% end %>
         <%= @video.channel.title %>
       </a>
-      <span class="video-date">
-        Опубликовано: <%= @video.published_at.strftime("%d.%m.%Y в %H:%M") %>
-      </span>
     </div>
-
-    <!-- ОПИСАНИЕ РОЛИКА -->
-    <% if @video.description.present? %>
-      <div style="background: #f2f2f2; padding: 20px; border-radius: 12px; font-size: 0.95rem; color: #0f0f0f; line-height: 1.6; white-space: pre-wrap; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02); margin-top: 16px;">
-        <%= @video.description %>
-      </div>
-    <% end %>
   </div>
 
-
-  <!-- Магический встроенный скрипт сохранения времени с защитой от черного экрана -->
+  <!-- ОБЪЕДИНЕННЫЙ ИНТЕЛЛЕКТУАЛЬНЫЙ СКРИПТ: Время просмотра, автоповорот и описание -->
   <script>
+    // 1. УПРАВЛЕНИЕ ВРЕМЕНЕМ ПРОСМОТРА И ОРИДЖИНОМ ПЛЕЕРА
     (function() {
       const videoId = "<%= @video.youtube_video_id %>";
-      
-      // Читаем время из локального хранилища браузера
       let savedTime = parseFloat(localStorage.getItem(videoId)) || 0;
-      
-      // Динамически берем длину видеоролика из базы данных Rails
       const durationSeconds = parseInt("<%= @video.duration_seconds || 0 %>", 10);
       
-      // ИСПРАВЛЕНО: Сброс на 0 срабатывает строго при 100% просмотре (savedTime >= durationSeconds)
       if (durationSeconds > 0 && savedTime >= durationSeconds) {
         savedTime = 0;
-        localStorage.setItem(videoId, 0); // Обнуляем кэш в браузере для повторного просмотра
+        localStorage.setItem(videoId, 0);
       }
 
-      // Инициализируем iframe с правильной стартовой секунды
       const iframe = document.getElementById("youtube-player");
       if (iframe) {
-        // ДОБАВЛЕНО: &origin=http://localhost:3000 и &playsinline=1 для авторизации JS-потока в браузере!
         const currentOrigin = window.location.origin;
         iframe.src = "https://www.youtube.com/embed/" + videoId + "?autoplay=1&rel=0&enablejsapi=1&playsinline=1&origin=" + encodeURIComponent(currentOrigin) + "&start=" + Math.round(savedTime);
       }
 
-      // Защита кэша Turbo Drive при навигации назад
       document.removeEventListener("turbo:visit", window.handleTurboBackRefresh);
       
       window.handleTurboBackRefresh = function(event) {
@@ -78,4 +78,39 @@
 
       document.addEventListener("turbo:visit", window.handleTurboBackRefresh);
     })();
+
+    // 2. РАСКРЫТИЕ И СВЕРТЫВАНИЕ ОПИСАНИЯ РОЛИКА
+    function toggleDescription(block) {
+      const text = document.getElementById('desc-text');
+      const btn = document.getElementById('more-btn');
+      
+      block.classList.toggle('expanded');
+      
+      if (block.classList.contains('expanded')) {
+        btn.innerText = 'Свернуть';
+      } else {
+        btn.innerText = '...еще';
+      }
+    }
+
+    // 3. УМНЫЙ АВТОПОВОРОТ НА ПОЛНЫЙ ЭКРАН ПРИ КЛИКЕ В ПЛЕЕРЕ
+    document.addEventListener("fullscreenchange", function() {
+      if (document.fullscreenElement) {
+        // Если вошли в полноэкранный режим — принудительно разворачиваем экран телефона набок
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock("landscape").catch(function(error) {
+            console.log("Поворот экрана заблокирован системой без тапа:", error);
+          });
+        }
+      } else {
+        // Когда выходим из полного экрана — возвращаем телефон в нормальный вертикальный вид
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      }
+    });
   </script>
+
+
+
+
