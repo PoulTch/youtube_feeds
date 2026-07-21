@@ -1,24 +1,24 @@
 <!-- ШИКАРНЫЙ ВЕРХНИЙ БАННЕР-ЗАСТАВКА АВТОРА -->
 <% if @channel.banner_url.present? %>
-  <div style="width: 100%; max-width: 1200px; margin: 0 auto 24px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-    <img src="<%= @channel.banner_url %>" alt="" style="width: 100%; height: 160px; object-fit: cover; display: block;">
+  <div class="channel-banner-container">
+    <img src="<%= @channel.banner_url %>" alt="" class="channel-banner-img">
   </div>
 <% end %>
 
-<!-- ШАПКА КАНАЛА: ОЦЕНТРИРОВАНА, С КНОПКОЙ РОБОТА И КНОПКОЙ ОТПИСКИ У САМОГО КРАЯ СПРАВА -->
-<header style="margin-bottom: 30px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px; position: relative; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
+<!-- ШАПКА КАНАЛА: ОЦЕНТРИРОВАНА, С КНОПКОЙ РОБОТА -->
+<header class="channel-main-header">
   
   <!-- Аватарка и Название по центру -->
-  <div style="display: flex; align-items: center; justify-content: center; gap: 14px; margin: 0;">
+  <div class="channel-branding-box">
     <% if @channel.avatar_url.present? %>
-      <img src="<%= @channel.avatar_url %>" alt="" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;">
+      <img src="<%= @channel.avatar_url %>" alt="" class="channel-avatar-img">
     <% else %>
-      <span style="font-size: 2.2rem; flex-shrink: 0;">🔴</span>
+      <span class="channel-avatar-fallback">🔴</span>
     <% end %>
-    <h1 style="color: #0f0f0f; font-size: 2.5rem; margin: 0; font-weight: bold; line-height: 1.1;"><%= @channel.title %></h1>
+    <h1 class="channel-main-title"><%= @channel.title %></h1>
   </div>
   
-  <p style="color: #606060; margin: 0; font-size: 1rem;">Всего видео в базе: <%= @channel.videos.count %></p>
+  <p class="channel-video-count">Всего видео в базе: <%= @channel.videos.count %></p>
   
   <!-- КНОПКА ЗАПУСКА РОБОТА -->
   <%= button_to fetch_channel_archive_path(@channel), 
@@ -31,36 +31,39 @@
                 onmousedown: "this.style.transform='scale(0.98)'" do %>
     🚀 Загрузить весь архив видео через yt-dlp
   <% end %>
-
-  <!-- КНОПКА ОТПИСАТЬСЯ СПРАВА -->
-  <%= button_to delete_channel_path(@channel), 
-                method: :delete, 
-                local: true,
-                data: { turbo: false },
-                onclick: "return confirm('Вы уверены, что хотите отписаться от канала «#{@channel.title}»? Все его видеоролики будут безвозвратно удалены из системы.');",
-                style: "position: absolute; right: 16px; top: 8px; background: #f2f2f2; color: #0f0f0f; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 0.95rem; cursor: pointer; transition: background 0.2s, color 0.2s; display: inline-flex; align-items: center; gap: 6px; outline: none;",
-                onmouseover: "this.style.background='#cc0000'; this.style.color='#ffffff'",
-                onmouseout: "this.style.background='#f2f2f2'; this.style.color='#0f0f0f'" do %>
-    <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
-    Отписаться
-  <% end %>
 </header>
 
-<!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК -->
-<div style="display: flex; gap: 24px; border-bottom: 2px solid #e8e8e8; margin-bottom: 20px; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
-  <a href="<%= channel_page_path(@channel, tab: 'videos') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'videos' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'videos' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
-    🎥 Видео
-  </a>
-  <a href="<%= channel_page_path(@channel, tab: 'playlists') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'playlists' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'playlists' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
-    📋 Плейлисты
-  </a>
+<!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК С КНОПКОЙ ОТПИСКИ СПРАВА -->
+<div class="channel-navigation-bar">
+  <!-- Вкладки (Видео и Плейлисты) -->
+  <div class="channel-tabs-list">
+    <a href="<%= channel_page_path(@channel, tab: 'videos') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'videos' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'videos' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+      🎥 Видео
+    </a>
+    <a href="<%= channel_page_path(@channel, tab: 'playlists') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'playlists' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'playlists' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+      📋 Плейлисты
+    </a>
+  </div>
+
+  <!-- Кнопка отписки теперь логически живет здесь, в одном ряду с вкладками -->
+  <div class="channel-actions-box">
+    <%= button_to delete_channel_path(@channel), 
+                  method: :delete, 
+                  local: true,
+                  data: { turbo: false },
+                  onclick: "return confirm('Вы уверены, что хотите отписаться от канала «#{@channel.title}»? Все его видеоролики будут безвозвратно удалены из системы.');",
+                  class: "channel-unsubscribe-btn",
+                  onmouseover: "this.style.background='#cc0000'; this.style.color='#ffffff'",
+                  onmouseout: "this.style.background='#f2f2f2'; this.style.color='#0f0f0f'" do %>
+      <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+      Отписаться
+    <% end %>
+  </div>
 </div>
 
-<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ (Выводится строго на вкладке обычных видео) -->
+<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ -->
 <% if @current_tab == 'videos' %>
-  <div style="display: flex; gap: 12px; margin-bottom: 24px; max-width: 1200px; margin-left: auto; margin-right: auto; padding: 0 16px;">
-    
-    <!-- Тег: Сначала Новые -->
+  <div class="channel-sorting-bar">
     <a href="<%= channel_page_path(@channel, tab: 'videos', sort: 'desc') %>" 
        style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
               background: <%= @current_sort == 'desc' ? '#0f0f0f' : '#f2f2f2' %>; 
@@ -69,8 +72,6 @@
        onmouseout="if('<%= @current_sort %>' !== 'desc') this.style.background='#f2f2f2'">
       ✨ Сначала новые
     </a>
-
-    <!-- Тег: Сначала Старые -->
     <a href="<%= channel_page_path(@channel, tab: 'videos', sort: 'asc') %>" 
        style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
               background: <%= @current_sort == 'asc' ? '#0f0f0f' : '#f2f2f2' %>; 
@@ -79,10 +80,8 @@
        onmouseout="if('<%= @current_sort %>' !== 'asc') this.style.background='#f2f2f2'">
       ⏳ Сначала старые
     </a>
-
   </div>
 <% end %>
-
 
 <!-- ДИНАМИЧЕСКИЙ ВЫВОД КОНТЕНТА В ЗАВИСИМОСТИ ОТ ВКЛАДКИ -->
 <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
