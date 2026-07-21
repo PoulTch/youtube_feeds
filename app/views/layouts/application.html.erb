@@ -3,7 +3,7 @@
   <head>
     <title><%= content_for(:title) || "MyChannels" %></title>
     <link rel="icon" type="image/png" href="/favicon.ico?v=6">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
@@ -13,22 +13,36 @@
     <%= javascript_importmap_tags %>
   </head>
   <body data-controller="sidebar">
-    <button class="sidebar-toggle" data-action="click->sidebar#toggle" aria-label="Открыть меню">☰</button>
+
+    <!-- НОВАЯ МОБИЛЬНАЯ ШАПКА: Держит кнопку ☰ и логотип в одной строке -->
+    <div class="mobile-header">
+      <button class="sidebar-toggle" data-action="click->sidebar#toggle" aria-label="Открыть меню">☰</button>
+      <div class="mobile-brand">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000" style="width: 22px; height: 22px; flex-shrink: 0;"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.3 1.12.3 3.48.3 3.48s0 2.36-.3 3.48a2.02 2.02 0 0 1-1.415 1.419c-1.123.3-5.288.3-6.11.335h-.089c-.822-.003-4.987-.033-6.11-.335a2.02 2.02 0 0 1-1.415-1.419C.3 10.34.3 7.98.3 7.98s0-2.36.3-3.48A2.01 2.01 0 0 1 2.015 2.3c1.123-.3 5.288-.3 6.11-.335zM6.5 5.5v5l4.25-2.5L6.5 5.5z"/></svg>
+        <span style="color: #ff0000; font-weight: bold; font-size: 1.2rem;">MyChannels</span>
+      </div>
+    </div>
+
+    <!-- ТЕМНЫЙ ЗАДНИЙ ФОН ПРИ ОТКРЫТИИ МЕНЮ -->
     <div class="sidebar-overlay" data-action="click->sidebar#toggle"></div>
+
+    <!-- СИСТЕМНЫЕ УВЕДОМЛЕНИЯ FLASH -->
     <% if flash[:notice] %>
       <div class="flash-message flash-notice"><%= flash[:notice] %></div>
     <% end %>
     <% if flash[:alert] %>
       <div class="flash-message flash-alert"><%= flash[:alert] %></div>
     <% end %>
+
+    <!-- ЛЕВАЯ ПАНЕЛЬ: САЙДБАР СИСТЕМЫ -->
     <aside class="app-sidebar">
       <div>
         <div class="brand">
-          <svg xmlns="http://w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.3 1.12.3 3.48.3 3.48s0 2.36-.3 3.48a2.02 2.02 0 0 1-1.415 1.419c-1.123.3-5.288.3-6.11.335h-.089c-.822-.003-4.987-.033-6.11-.335a2.02 2.02 0 0 1-1.415-1.419C.3 10.34.3 7.98.3 7.98s0-2.36.3-3.48A2.01 2.01 0 0 1 2.015 2.3c1.123-.3 5.288-.3 6.11-.335zM6.5 5.5v5l4.25-2.5L6.5 5.5z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.3 1.12.3 3.48.3 3.48s0 2.36-.3 3.48a2.02 2.02 0 0 1-1.415 1.419c-1.123.3-5.288.3-6.11.335h-.089c-.822-.003-4.987-.033-6.11-.335a2.02 2.02 0 0 1-1.415-1.419C.3 10.34.3 7.98.3 7.98s0-2.36.3-3.48A2.01 2.01 0 0 1 2.015 2.3c1.123-.3 5.288-.3 6.11-.335zM6.5 5.5v5l4.25-2.5L6.5 5.5z"/></svg>
           <span>MyChannels</span>
         </div>
         <a href="<%= root_path %>" class="nav-link">
-          <svg xmlns="http://w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000"><path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/><path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="#000000"><path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/><path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/></svg>
           Общая лента
         </a>
         <div class="subscriptions">
@@ -65,6 +79,7 @@
           <% end %>
         </div>
       </div>
+      
       <div class="sidebar-footer">
         <button onclick="document.getElementById('settings-dialog').showModal()" class="settings-btn">
           <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="#000000" style="width: 18px; height: 18px; flex-shrink: 0;"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872zM8 10.93a2.929 2.929 0 1 1 0-5.858A2.929 2.929 0 0 1 8 10.93z"/></svg>

@@ -740,6 +740,65 @@ body {
   }
 }
 
+/* ==========================================================================
+   ФИНАЛЬНЫЕ ИСПРАВЛЕНИЯ ДЛЯ МОБИЛЬНОЙ ШАПКИ И КНОПКИ МЕНЮ (БЕЗ БАГОВ НА ПК)
+   ========================================================================== */
+
+/* Создаем красивую верхнюю шапку на смартфонах */
+.mobile-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  z-index: 1200;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-sizing: border-box;
+}
+
+/* На мобильных кнопка гамбургера аккуратно стоит в шапке */
+.sidebar-toggle {
+  position: static; 
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 22px;
+  color: #0f0f0f;
+  box-shadow: none; 
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Логотип рядом с кнопкой в мобильной шапке */
+.mobile-header .mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* --- ПРАВИЛА ДЛЯ КОМПЬЮТЕРОВ И НОУТБУКОВ (Экраны от 1024px и шире) --- */
+@media (min-width: 1024px) {
+  /* Полностью уничтожаем мобильную шапку на ПК */
+  .mobile-header {
+    display: none !important;
+  }
+  
+  /* Жестко скрываем кнопку меню на ПК, чтобы она не сдвигала контент и пагинацию */
+  .sidebar-toggle {
+    display: none !important;
+    position: absolute !important; /* Убираем её из общего потока документа */
+  }
+}
+
+
 
 
 
