@@ -184,7 +184,14 @@
           </div>
         <% end %>
       </div>
+
+            <!-- 🎯 ВОТ СЮДА ВСТАВЛЯЕМ БЛОК ПАГИНАЦИИ PAGY -->
+      <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
+        <%== @pagy.series_nav %>
+      </div>
+
     <% else %>
+      <!-- Заглушка, если на вкладке Видео действительно пусто -->
       <div style="text-align: center; padding: 60px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc; margin-top: 20px;">
         <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📦</span>
         <h3 style="margin: 0 0 5px 0; font-weight: bold; color: #0f0f0f;">В ленте этого канала пока пусто</h3>

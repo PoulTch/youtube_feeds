@@ -1,0 +1,9 @@
+ru:
+  number:
+    human:
+      decimal_units:
+        format: "%n %u"
+        units:
+          thousand: "тыс."
+          million: "млн"
+          billion: "млрд"

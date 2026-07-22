@@ -45,13 +45,14 @@ class VideosController < ApplicationController
         # 1. Скачиваем свежие видеоролики из RSS
         channel.fetch_videos
 
-        # 2. МГНОВЕННЫЙ ДЕСАНТ ВРЕМЕНИ: Качаем длительность видеороликов через API v3 прямо сейчас!
+        # 2. МГНОВЕННЫЙ ДЕСАНТ ВРЕМЕНИ И СТАТИСТИКИ ПРИ СОЗДАНИИ
         api_key = Rails.application.config.youtube_api_key
-        videos_to_update = channel.videos.where(duration_seconds: nil).limit(20)
+        # ИСПРАВЛЕНО: Теперь ищем ролики, где нет либо секунд, либо просмотров
+        videos_to_update = channel.videos.where(duration_seconds: nil).or(channel.videos.where(views_count: nil)).limit(20)
 
         if api_key.present? && videos_to_update.any?
           video_ids = videos_to_update.map(&:youtube_video_id).join(",")
-          url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=#{video_ids}&key=#{api_key}"
+          url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet,statistics&id=#{video_ids}&key=#{api_key}"
           begin
             uri = URI.parse(url)
             response = Net::HTTP.get_response(uri)
@@ -60,19 +61,34 @@ class VideosController < ApplicationController
               if data["items"].present?
                 data["items"].each do |item|
                   v_id = item["id"]
+
+                  # 1. Сбор длительности
                   iso_duration = item.dig("contentDetails", "duration")
-                  if iso_duration.present?
-                    seconds = ActiveSupport::Duration.parse(iso_duration).to_i
-                    if seconds > 0
-                      v = channel.videos.find_by(youtube_video_id: v_id)
-                      v.update_columns(duration_seconds: seconds) if v
-                    end
+                  seconds = iso_duration.present? ? ActiveSupport::Duration.parse(iso_duration).to_i : 0
+
+                  # 2. Сбор даты публикации
+                  real_date_str = item.dig("snippet", "publishedAt")
+
+                  # 3. Сбор просмотров и лайков
+                  views = item.dig("statistics", "viewCount").to_i
+                  likes = item.dig("statistics", "likeCount").to_i
+
+                  v = channel.videos.find_by(youtube_video_id: v_id)
+                  if v
+                    updates = {}
+                    updates[:duration_seconds] = seconds if seconds > 0
+                    updates[:published_at] = Time.parse(real_date_str) if real_date_str.present?
+                    updates[:views_count] = views if views > 0
+                    updates[:likes_count] = likes if likes > 0
+
+                    # Сохраняем пачкой все новые данные в PostgreSQL
+                    v.update_columns(updates) if updates.any?
                   end
                 end
               end
             end
           rescue => e
-            Rails.logger.error "Ошибка быстрого сбора времени при создании канала: #{e.message}"
+            Rails.logger.error "Ошибка быстрого сбора времени и статистики при создании канала: #{e.message}"
           end
         end
 
@@ -91,7 +107,7 @@ class VideosController < ApplicationController
     redirect_to root_path, data: { turbo: false }
   end
 
-  # 3. Страница конкретного одного канала (С ПОДДЕРЖКОЙ ВКЛАДОК И СОРТИРОВКИ ХРОНОЛОГИИ)
+  # 3. Страница конкретного одного канала (РЕАКТИВНО БЫСТРАЯ С ПАГИНАЦИЕЙ PAGY)
   def show_channel
     @channel = Channel.find_by(id: params[:id])
 
@@ -109,14 +125,17 @@ class VideosController < ApplicationController
     if @current_tab == "playlists"
       @playlists = @channel.playlists.order(title: :asc)
     else
-      # Переворачиваем запрос в зависимости от нажатой кнопки!
-      if @current_sort == "asc"
-        # Старые: от древних к новым (published_at по возрастанию)
-        @videos = @channel.videos.order(published_at: :asc, id: :asc)
+      # Формируем базовый запрос к базе данных (пока без загрузки самих видео)
+      videos_relation = if @current_sort == "asc"
+                          # Старые: от древних к новым
+                          @channel.videos.order(published_at: :asc, id: :asc)
       else
-        # Новые: от свежих к древним (published_at по убыванию)
-        @videos = @channel.videos.order(published_at: :desc, id: :desc)
+                          # Новые: от свежих к древним
+                          @channel.videos.order(published_at: :desc, id: :desc)
       end
+
+      # МАГИЯ PAGY: Разбиваем 1146 видео на аккуратные страницы по 24 штуки за раз
+      @pagy, @videos = pagy(:offset, videos_relation, limit: 24)
     end
   end
 
@@ -139,7 +158,6 @@ class VideosController < ApplicationController
   end
 
 
-
   # 4. Новый метод для страницы просмотра видео (ИСПРАВЛЕНО: Защита от nil-ошибок 500)
   def show
     @video = Video.find_by(id: params[:id])
@@ -149,7 +167,7 @@ class VideosController < ApplicationController
     end
   end
 
-  # 5. Метод вызывается из JS в фоне для сохранения прогресса просмотра
+  # 5. Метод вызывается из JS в фоне для保存ения прогресса просмотра
   def save_progress
     video = Video.find(params[:id])
 
@@ -213,7 +231,7 @@ class VideosController < ApplicationController
     redirect_to root_path
   end
 
-  # 8. БРОНЕБОЙНЫЙ РЕАКТИВНЫЙ ИМПОРТ АРХИВА С АВТОМАТИЧЕСКИМ СКАНЕРОМ ПУСТЫХ ТАЙМИНГОВ
+  # 8. БРОНЕБОЙНЫЙ РЕАКТИВНЫЙ ИМПОРТ АРХИВА С АВТОМАТИЧЕСКИМ СБОРОМ ЛАЙКОВ И ПРОСМОТРОВ
   def fetch_channel_archive
     channel = Channel.find(params[:id])
     new_video_ids = []
@@ -253,12 +271,12 @@ class VideosController < ApplicationController
         end
       end
 
-      api_key = ENV["YOUTUBE_API_KEY"]
+      # Используем ваш рабочий ключ из конфигурации, как в консоли
+      api_key = Rails.application.config.youtube_api_key
 
       if api_key.present?
-        # 🎯 АВТОМАТИЗАЦИЯ: Собираем ID свежей сотни + добавляем ВСЕ ролики этого канала, у которых пустые тайминги!
-        # Это навсегда избавит нас от ручной работы в консоли для старых видео!
-        historic_blank_ids = channel.videos.where(duration_seconds: [ nil, 0 ]).pluck(:youtube_video_id)
+        # 🎯 АВТОМАТИЗАЦИЯ СТАТИСТИКИ: Собираем ID свежей сотни + добавляем ВСЕ ролики, где нет просмотров или секунд!
+        historic_blank_ids = channel.videos.where(duration_seconds: [ nil, 0 ]).or(channel.videos.where(views_count: nil)).pluck(:youtube_video_id)
 
         # Склеиваем массивы и убираем дубликаты
         total_ids_to_sync = (new_video_ids + historic_blank_ids).uniq.compact
@@ -267,7 +285,8 @@ class VideosController < ApplicationController
         if total_ids_to_sync.any?
           total_ids_to_sync.each_slice(50) do |slice|
             ids_string = slice.join(",")
-            api_url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=#{ids_string}&key=#{api_key}"
+            # ИСПРАВЛЕНО: Добавили statistics в part запроса
+            api_url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=#{ids_string}&key=#{api_key}"
 
             response = Channel.fetch_with_redirects(api_url)
             if response && response.is_a?(Net::HTTPSuccess)
@@ -277,12 +296,19 @@ class VideosController < ApplicationController
                   v_id = item["id"]
                   snippet = item["snippet"]
                   content_details = item["contentDetails"]
+                  statistics = item["statistics"] # ДОБАВИЛИ: блок статистики от Google
 
                   db_video = channel.videos.find_by(youtube_video_id: v_id)
                   if db_video && snippet
                     db_video.title = snippet["title"] if snippet["title"].present?
                     db_video.published_at = snippet["publishedAt"]
                     db_video.description = snippet["description"] if snippet["description"].present?
+
+                    # Вытаскиваем просмотры и лайки
+                    if statistics
+                      db_video.views_count = statistics["viewCount"].to_i if statistics["viewCount"].present?
+                      db_video.likes_count = statistics["likeCount"].to_i if statistics["likeCount"].present?
+                    end
 
                     if content_details && content_details["duration"].present?
                       begin

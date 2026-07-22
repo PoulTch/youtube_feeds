@@ -1,4 +1,4 @@
-<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" style="font-family: sans-serif; max-width: 1260px; margin: 0 auto; padding: 20px 40px;">
+<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" class="video-main-layout">
 
   <!-- ВСТРОЕННЫЙ ПЛЕЕР YOUTUBE -->
   <div class="video-player">
@@ -10,7 +10,6 @@
     </iframe>
   </div>
 
-
   <!-- ТЕКСТОВЫЙ БЛОК -->
   <div class="video-info-block">
     <h1 class="video-title">
@@ -19,13 +18,15 @@
 
     <!-- НОВОЕ ОПИСАНИЕ В СТИЛЕ YOUTUBE (С КЛИКОМ ДЛЯ РАЗВЕРТЫВАНИЯ) -->
     <% if @video.description.present? %>
-      <!-- При клике на этот блок он будет разворачиваться -->
       <div class="video-description-box" onclick="toggleDescription(this)">
         
-        <!-- Ряд счетчиков перед текстом (Просмотры и лайки пока статичные) -->
         <div class="video-stats-inline">
-          12 тыс. просмотров <span>•</span> 👍 1.4 тыс. <span>•</span> 
-          <%= @video.published_at.strftime("%d.%m.%Y") %>
+          <%= number_to_human(@video.views_count, locale: :ru) if @video.views_count.to_i > 0 %> просмотров 
+          <% if @video.likes_count.to_i > 0 %>
+            <span>•</span> 👍 <%= number_to_human(@video.likes_count, locale: :ru) %> 
+          <% end %>
+          <span>•</span> 
+          <%= @video.published_at.strftime("%d.%m.%Y") if @video.published_at %>
         </div>
 
         <div class="video-description-text" id="desc-text">
@@ -35,11 +36,11 @@
       </div>
     <% end %>
 
-    <!-- БЛОК АВТОРСТВА (Спустили под описание, как в новом интерфейсе YT) -->
+    <!-- БЛОК АВТОРСТВА -->
     <div class="video-meta-block" style="margin-top: 20px;">
       <a href="<%= channel_page_path(@video.channel) %>" style="text-decoration: none; display: flex; align-items: center; gap: 10px; color: #ff0000; font-weight: bold; font-size: 1.1rem; transition: opacity 0.2s;" onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'">
         <% if @video.channel.avatar_url.present? %>
-          <img src="<%= @video.channel.avatar_url %>" alt="" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <img src="<%= @video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 36px; height: 36px; flex-shrink: 0;">
         <% else %>
           <span style="font-size: 1.3rem;">🔴</span>
         <% end %>
@@ -96,21 +97,16 @@
     // 3. УМНЫЙ АВТОПОВОРОТ НА ПОЛНЫЙ ЭКРАН ПРИ КЛИКЕ В ПЛЕЕРЕ
     document.addEventListener("fullscreenchange", function() {
       if (document.fullscreenElement) {
-        // Если вошли в полноэкранный режим — принудительно разворачиваем экран телефона набок
         if (screen.orientation && screen.orientation.lock) {
           screen.orientation.lock("landscape").catch(function(error) {
             console.log("Поворот экрана заблокирован системой без тапа:", error);
           });
         }
       } else {
-        // Когда выходим из полного экрана — возвращаем телефон в нормальный вертикальный вид
         if (screen.orientation && screen.orientation.unlock) {
           screen.orientation.unlock();
         }
       }
     });
   </script>
-
-
-
-
+</div>
