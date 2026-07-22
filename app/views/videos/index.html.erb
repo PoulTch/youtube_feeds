@@ -12,7 +12,7 @@
         <% @history_videos.each do |video| %>
           <div style="flex: 0 0 240px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;">
             
-            <!-- ПРЕВЬЮ -->
+            <!-- ПРЕВЬЮ ИСТОРИИ -->
             <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
               <% if video.thumbnail_url.present? %>
                 <img src="<%= video.thumbnail_url %>" alt="" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
@@ -36,13 +36,22 @@
               <% end %>
             </a>
 
-            <!-- ИНФОРМАЦИЯ -->
+            <!-- ИНФОРМАЦИЯ ИСТОРИИ (С ДОБАВЛЕНИЕМ МИКРО-АВАТАРКИ) -->
             <div style="padding: 10px 8px 8px 8px;">
-              <h3 style="margin: 0 0 4px 0; font-size: 0.85rem; line-height: 1.3; font-weight: bold; max-height: 2.6rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+              <h3 style="margin: 0 0 6px 0; font-size: 0.85rem; line-height: 1.3; font-weight: bold; max-height: 2.6rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                 <a href="<%= watch_video_path(video) %>" style="text-decoration: none; color: #0f0f0f;"><%= video.title %></a>
               </h3>
-              <p style="margin: 0; font-size: 0.75rem; color: #ff0000; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                <%= video.channel.title %>
+              
+              <!-- Красивый горизонтальный ряд: кругляш аватарки + название канала -->
+              <p style="margin: 0; font-size: 0.75rem; color: #ff0000; font-weight: bold; display: flex; align-items: center; gap: 6px; overflow: hidden;">
+                <% if video.channel.avatar_url.present? %>
+                  <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 14px; height: 14px; flex-shrink: 0;">
+                <% else %>
+                  <span style="font-size: 0.75rem; flex-shrink: 0;">🔴</span>
+                <% end %>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                  <%= video.channel.title %>
+                </span>
               </p>
             </div>
 
@@ -53,13 +62,15 @@
   <% end %>
 
 
-  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК ================= -->
+  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК (ВОССТАНОВЛЕНО) ================= -->
   <h2 style="margin: 0 0 20px 0; font-size: 1.6rem; font-weight: bold; color: #0f0f0f;">✨ Общая лента контента</h2>
 
+  <!-- Сетка для видео-карточек общей ленты -->
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
     <% @videos.each do |video| %>
       <div style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         
+        <!-- Ссылка на видео вокруг превью -->
         <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
           <% if video.thumbnail_url.present? %>
             <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
@@ -71,6 +82,7 @@
             <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
               <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
             </div>
+          ```
           <% end %>
         </a>
 
@@ -82,6 +94,7 @@
           ></div>
         </div>
 
+        <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
         <div style="padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
             <h3 style="margin: 0 0 8px 0; font-size: 1rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
@@ -89,7 +102,14 @@
                 <%= video.title %>
               </a>
             </h3>
-            <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold;">
+            
+            <!-- МИКРО-АВАТАРКА АВТОРСТВА В ОБЩЕЙ ЛЕНТЕ -->
+            <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+              <% if video.channel.avatar_url.present? %>
+                <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; flex-shrink: 0;">
+              <% else %>
+                <span style="font-size: 0.85rem;">🔴</span>
+              <% end %>
               <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
                 <%= video.channel.title %>
               </a>
@@ -103,14 +123,15 @@
               Опубликовано: Скоро (Анонс)
             <% end %>
           </div>
-        </div>
+        </div> <!-- Конец блока padding: 16px -->
 
-      </div>
+      </div> <!-- Конец карточки видео -->
     <% end %>
-    
-    <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
-      <%== @pagy.series_nav %>
-    </div>
+  </div> <!-- Конец сетки grid -->
 
-  </div> 
+  <!-- ПАГИНАЦИЯ PAGY -->
+  <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
+    <%== @pagy.series_nav %>
+  </div>
+
 </div>

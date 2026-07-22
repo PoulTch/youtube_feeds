@@ -876,6 +876,100 @@ body {
   font-weight: normal;
 }
 
+/* ==========================================================================
+   ФИНАЛЬНЫЙ АККУРАТНЫЙ СТИЛЬ УГОЛКОВ ДЛЯ КАРТОЧЕК И ПРЕВЬЮШЕК
+   ========================================================================== */
+
+/* Принудительно закругляем ВСЕ углы у картинок-превью и карточек везде */
+.video-grid img, 
+.video-card img,
+.channel-link img,
+.video-info-block img,
+img.avatar,
+.avatar-placeholder {
+  border-radius: 12px !important; /* Делаем мягкие закругления */
+}
+
+/* На мобильных экранах (< 768px) наводим полный порядок */
+@media (max-width: 768px) {
+  /* Карточки видеороликов на общей ленте и внутри каналов */
+  .video-grid > div,
+  .video-card,
+  [style*="display: grid"] > div {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    background: #ffffff; /* небольшой фон для аккуратности */
+  }
+
+  /* Картинки внутри этих карточек */
+  .video-grid img,
+  .video-card img,
+  [style*="display: grid"] img {
+    border-radius: 12px 12px 0 0 !important; /* у картинок скругляем только верх, чтобы они не резали углы карточки */
+  }
+}
+
+/* ==========================================================================
+   9. ТОЧЕЧНОЕ ИСПРАВЛЕНИЕ УГОЛКОВ (ОБЩАЯ ЛЕНТА, КАНАЛЫ И ПЛЕЕР)
+   ========================================================================== */
+
+/* 1. Возвращаем закругления плееру на мобилках */
+@media (max-width: 768px) {
+  /* Возвращаем отступы по бокам, чтобы плеер не лип к краям телефона */
+  .app-main:has(.video-player) {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+    padding-top: 72px !important; 
+  }
+  
+  /* Делаем плееру на телефоне такие же круглые углы, как на ПК */
+  .video-player {
+    border-radius: 16px !important; 
+    overflow: hidden !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+/* 2. Лечим карточки и превью на страницах каналов */
+.video-grid > div,
+.video-card,
+[style*="display: grid"] > div {
+  border-radius: 12px !important; /* Скругляем саму карточку целиком */
+  overflow: hidden !important;
+}
+
+/* У картинок внутри карточек скругляем ТОЛЬКО верхние углы, 
+   чтобы на стыке с текстом (снизу картинки) линия была ровной */
+.video-grid img,
+.video-card img,
+[style*="display: grid"] img {
+  border-radius: 12px 12px 0 0 !important; 
+  object-fit: cover;
+}
+
+/* Оставляем полноценное закругление только для круглых аватарок */
+img.avatar,
+.avatar-placeholder,
+.channel-avatar-img {
+  border-radius: 50% !important; /* Аватарки всегда строго круглые */
+}
+
+
+/* Принудительно делаем абсолютно все аватарки (большие и микро) круглыми */
+img.avatar,
+.avatar-placeholder,
+.channel-avatar-img,
+img.micro-avatar {
+  border-radius: 50% !important; /* Настоящий 100% круг */
+  object-fit: cover !important;
+}
+
+/* Принудительно возвращаем 50% круг для аватарки автора на странице видеоролика */
+.video-meta-block img,
+.video-meta-block img[style] {
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
 
 
 

@@ -128,17 +128,19 @@
     <% end %>
 
   <% else %>
-    <!-- ================= СТАНДАРТНАЯ ВКЛАДКА ВИДЕО (СОХРАНЕНА НА 100%) ================= -->
+    <!-- ================= СТАНДАРТНАЯ ВКЛАДКА ВИДЕО (ИСПРАВЛЕНЫ УГОЛКИ) ================= -->
     <% if @videos.any? %>
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
         <% @videos.each do |video| %>
           <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
             
-            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px;">
+            <!-- ИСПРАВЛЕНО: Скругляем ТОЛЬКО верхние углы ссылки-обёртки (12px 12px 0 0) -->
+            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px 12px 0 0;">
               <% if video.thumbnail_url.present? %>
                 <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
               <% else %>
-                <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem;">Нет превью</div>
+                <!-- ИСПРАВЛЕНО: Заглушке тоже скругляем только верхние углы -->
+                <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem; border-radius: 12px 12px 0 0;">Нет превью</div>
               <% end %>
               
               <% if video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
@@ -156,7 +158,7 @@
             </a>
 
             <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
-            <div style="padding: 12px 4px 4px 4px;">
+            <div style="padding: 12px 4px 4px 12px;"> <!-- Чуть увеличили левый отступ для красоты -->
               <h2 style="font-size: 1rem; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                 <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
                   <%= video.title %>
@@ -166,7 +168,8 @@
               <!-- МИКРО-АВАТАРКА АВТОРСТВА ПОД ПРЕВЬЮ -->
               <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
                 <% if video.channel.avatar_url.present? %>
-                  <img src="<%= video.channel.avatar_url %>" alt="" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                  <!-- ИСПРАВЛЕНО: Добавили класс micro-avatar, чтобы стили не конфликтовали -->
+                  <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
                 <% end %>
                 <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
                   <%= video.channel.title %>
@@ -182,7 +185,6 @@
         <% end %>
       </div>
     <% else %>
-      <!-- Заглушка, если на вкладке Видео действительно пусто -->
       <div style="text-align: center; padding: 60px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc; margin-top: 20px;">
         <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📦</span>
         <h3 style="margin: 0 0 5px 0; font-weight: bold; color: #0f0f0f;">В ленте этого канала пока пусто</h3>
@@ -190,5 +192,4 @@
       </div>
     <% end %>
   <% end %>
-
 </div>
