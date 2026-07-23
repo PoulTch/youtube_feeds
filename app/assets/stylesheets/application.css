@@ -1010,6 +1010,63 @@ img.micro-avatar {
   }
 }
 
+/* ==========================================================================
+   ГЕОМЕТРИЧЕСКИЙ КАНОН YOUTUBE ДЛЯ МОБИЛОК + ЗАЩИТА ПК-ВЕРСИИ
+   ========================================================================== */
+
+/* 1. На компьютерах мобильная шапка строго скрыта */
+@media (min-width: 769px) {
+  .mobile-header {
+    display: none !important;
+  }
+}
+
+/* 2. На мобильных включаем идеальный Flexbox */
+@media (max-width: 768px) {
+  .mobile-header {
+    display: flex !important;
+    align-items: center !important; 
+  }
+}
+
+/* Кнопка трех полосок: убираем внутренние перекосы шрифта */
+.sidebar-toggle {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+
+/* Контейнеры бренда: Flexbox нанизывает крупную иконку и букву М на один центр */
+.mobile-brand,
+.brand {
+  display: flex !important;
+  align-items: center !important; 
+  align-content: center !important;
+  gap: 8px !important; /* Вернули комфортный отступ для крупной иконки */
+}
+
+/* Текст MyChannels: идеальное выравнивание */
+.mobile-brand span,
+.brand span {
+  display: inline-block !important;
+  line-height: 1 !important; 
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Нативная иконка YouTube: больше никаких сдвигов */
+svg.yt-svg-icon {
+  overflow: visible !important;
+  display: block !important; 
+  margin: 0 !important; 
+}
+
+
+
+
+
+
 
 
 
