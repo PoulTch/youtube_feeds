@@ -245,7 +245,7 @@ class VideosController < ApplicationController
     ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
 
     # 1. Быстрый сбор свежей сотни ID роликов, чтобы мгновенно обновить ленту новинками
-    cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --flat-playlist --playlist-end 100 --dump-json '#{channel_url}'\""
+    cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --flat-playlist --playlist-end 500 --dump-json '#{channel_url}'\""
 
     begin
       IO.popen(cmd) do |io|
