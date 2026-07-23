@@ -223,10 +223,14 @@ class VideosController < ApplicationController
     redirect_to root_path
   end
 
-  # 7. Метод для удаления канала и всех его видеороликов (РАБОТАЕТ С ФЛЭШЕМ И КНОПКОЙ ОТПИСКИ)
+  # 7. Метод для удаления канала и всех его видеороликов (РЕАКТИВНО БЫСТРЫЙ)
   def destroy
     @channel = Channel.find(params[:id])
-    @channel.destroy # Благодаря dependent: :destroy все видео канала сотрутся автоматически!
+    @channel.destroy # Теперь благодаря :delete_all в модели это сработает мгновенно!
+
+    # ПРИНУДИТЕЛЬНЫЙ СБРОС КЭША: Сайдбар обновится в ту же миллисекунду!
+    Rails.cache.delete("sidebar_channels_user_#{session[:user_id]}")
+
     flash[:notice] = "Канал «#{@channel.title}» и все его видео успешно удалены."
     redirect_to root_path
   end
