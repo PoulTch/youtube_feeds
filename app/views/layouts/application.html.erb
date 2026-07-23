@@ -118,39 +118,60 @@
         });
       });
     </script>
-    <!-- ВОЗВРАЩЕННОЕ МОДАЛЬНОЕ ОКНО НАСТРОЕК СИСТЕМЫ (ПОЛНАЯ ВЕРСИЯ) -->
-    <dialog id="settings-dialog" class="settings-modal">
-      <div class="modal-header">
-        <h2>⚙️ Настройки MyChannels</h2>
-        <button onclick="document.getElementById('settings-dialog').close()" class="close-modal">&times;</button>
-      </div>
 
-      <!-- ФОРМА ДОБАВЛЕНИЯ НОВОГО БЛОГЕРА (С СУПЕР-ЧЕТКИМ ВВОДОМ ID 'UC') -->
-      <%= form_with url: add_channel_path, method: :post, local: true, data: { turbo: false } do |f| %>
-        <div>
-          <label>ID YouTube канала:</label>
-          <%= f.text_field :youtube_channel_id, 
-                           required: true, 
-                           placeholder: "Например: UC_x5XG1OV2P6uZZ5...",
-                           autocomplete: "off",
-                           onfocus: "this.style.borderColor='#ff0000'", 
-                           onblur: "this.style.borderColor='#ccc'" %>
-          <small>Введите официальный идентификатор, начинающийся строго с букв <strong>UC</strong>.</small>
+    <!-- ВОЗВРАЩЕННОЕ МОДАЛЬНОЕ ОКНО НАСТРОЕК СИСТЕМЫ (УМНЫЙ UX И ЗАКРЫТИЕ ПО ФОНУ) -->
+    <!-- ДОБАВИЛИ: onclick слежку за кликом по фону диалога -->
+    <dialog id="settings-dialog" class="settings-modal" onclick="closeModalOnBackdropClick(event)">
+      
+      <!-- ДОБАВИЛИ: внутреннюю обертку-щит, которая защищает формы от случайного закрытия при клике внутри окна -->
+      <div class="modal-inner-content" onclick="event.stopPropagation()">
+        
+        <div class="modal-header">
+          <h2>⚙️ Настройки <span class="hide-on-mobile">MyChannels</span></h2>
+          <button type="button" onclick="document.getElementById('settings-dialog').close()" class="close-modal">&times;</button>
         </div>
 
-        <%= f.submit "Добавить автора в ленту" %>
-      <% end %>
+        <!-- ФОРМА ДОБАВЛЕНИЯ НОВОГО БЛОГЕРА (С СУПЕР-ЧЕТКИМ ВВОДОМ ID 'UC') -->
+        <%= form_with url: add_channel_path, method: :post, local: true, data: { turbo: false } do |f| %>
+          <div>
+            <label>ID YouTube канала:</label>
+            <%= f.text_field :youtube_channel_id, 
+                             required: true, 
+                             placeholder: "Например: UC_x5XG1OV2P6uZZ5...",
+                             autocomplete: "off",
+                             onfocus: "this.style.borderColor='#ff0000'", 
+                             onblur: "this.style.borderColor='#ccc'" %>
+            <small>Введите официальный идентификатор, начинающийся строго с букв <strong>UC</strong>.</small>
+          </div>
 
-      <!-- БЛОК МАССОВОГО ИМПОРТА -->
-      <div class="import-section">
-        <span class="import-title">Массовый импорт из YouTube (subscriptions.csv):</span>
-        <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true, data: { turbo: false } do |f| %>
-          <label class="file-label">
-            📁 Выбрать файл подписок и загрузить
-            <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
-          </label>
+          <%= f.submit "Добавить автора в ленту" %>
         <% end %>
-      </div>     
+
+        <!-- БЛОК МАССОВОГО ИМПОРТА -->
+        <div class="import-section">
+          <span class="import-title">Массовый импорт из YouTube (subscriptions.csv):</span>
+          <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true, data: { turbo: false } do |f| %>
+            <label class="file-label">
+              📁 Выбрать файл подписок и загрузить
+              <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
+            </label>
+          <% end %>
+        </div>     
+        
+      </div> <!-- Конец обертки modal-inner-content -->
     </dialog>
+
+    <!-- ИНТЕЛЛЕКТУАЛЬНЫЙ СКРИПТ ДЛЯ ТЕГА DIALOG -->
+    <script>
+      function closeModalOnBackdropClick(event) {
+        const dialog = document.getElementById('settings-dialog');
+        // Проверяем: если клик пришелся на сам тег <dialog> (то есть на его темный фон-задник), 
+        // а не на внутренний контент, то закрываем окно нативным методом .close()
+        if (event.target === dialog) {
+          dialog.close();
+        }
+      }
+    </script>
   </body>
 </html>
+

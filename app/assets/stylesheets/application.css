@@ -971,6 +971,47 @@ img.micro-avatar {
   object-fit: cover !important;
 }
 
+/* ==========================================================================
+   ФИНАЛЬНЫЙ UX ПОЛИШИНГ МОДАЛЬНОГО ОКНА (АДАПТИРОВАНО ПОД IPHONE SE)
+   ========================================================================== */
+
+/* Базовые правила для заголовка на ПК и планшетах */
+.modal-header h2,
+.settings-modal h2 {
+  white-space: nowrap !important;
+  font-size: 1.4rem !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px;
+}
+
+/* УМНАЯ СЖАТАЯ ВЕРСТКА ДЛЯ УЗКИХ СМАРТФОНОВ (Экраны меньше 400px) */
+@media (max-width: 400px) {
+  /* Прячем слово MyChannels, чтобы заголовок гарантированно влез на iPhone SE */
+  .modal-header h2 .hide-on-mobile {
+    display: none !important;
+  }
+  
+  /* Слегка уменьшаем размер шрифта, чтобы надписи "Настройки" дышалось свободно */
+  .modal-header h2,
+  .settings-modal h2 {
+    font-size: 1.25rem !important;
+  }
+}
+
+/* На мобильных экранах даем самому белому окну красивую ширину с отступами */
+@media (max-width: 768px) {
+  .settings-modal {
+    width: 90% !important;
+    max-width: 380px !important;
+    padding: 20px !important;
+    border-radius: 16px !important;
+  }
+}
+
+
+
 
 
 
