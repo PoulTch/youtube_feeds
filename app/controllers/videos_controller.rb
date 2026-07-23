@@ -240,12 +240,18 @@ class VideosController < ApplicationController
     channel = Channel.find(params[:id])
     new_video_ids = []
 
-    channel_url = "https://www.youtube.com/channel/#{channel.youtube_channel_id}"
-    powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-    ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
+    channel_url = "https://www.youtube.com/channel/#{channel.youtube_channel_id}/videos"
 
-    # 1. Быстрый сбор свежей сотни ID роликов, чтобы мгновенно обновить ленту новинками
-    cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --flat-playlist --playlist-end 500 --dump-json '#{channel_url}'\""
+    # МАГИЯ АДАПТАЦИИ: Проверяем, есть ли на машине Windows-путь к PowerShell (это ваш домашний ПК с WSL)
+    if File.exist?("/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
+      powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+      ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
+      cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --flat-playlist --playlist-end 500 --dump-json '#{channel_url}'\""
+    else
+      # Команда для вашего БОЕВОГО сервера VPS (Чистый Linux Ubuntu)
+      # Используем системный yt-dlp, который мы только что успешно установили!
+      cmd = "yt-dlp --flat-playlist --playlist-end 500 --dump-json '#{channel_url}'"
+    end
 
     begin
       IO.popen(cmd) do |io|
