@@ -1062,6 +1062,56 @@ svg.yt-svg-icon {
   margin: 0 !important; 
 }
 
+/* ==========================================================================
+   АБСОЛЮТНЫЙ ФЕНШУЙ: УЛЬТРА-HD БАННЕР БЕЗ СДВИГОВ И КЛЯТЫХ НИЖНИХ ПОЛОС (4%)
+   ========================================================================== */
+
+/* Контейнер-рамка: работает как идеальное обрезное окно */
+.channel-banner-container {
+  width: 100% !important;
+  max-width: 1200px !important;    /* Жестко совпадает с шириной вашей ленты */
+  height: 200px !important;        /* Каноническая высота для ПК-мониторов */
+  overflow: hidden !important;     /* НАМЕРТВО прячет клятую полосу, ушедшую вниз! */
+  border-radius: 12px !important;  /* Круглые уголки, как у плеера */
+  background: #f1f1f1 !important;
+  margin: 0 auto 25px auto !important;
+  display: block !important;
+}
+
+/* Сама картинка: делаем её ровно на 4% выше контейнера на ВСЕХ устройствах! */
+.channel-banner-img {
+  width: 100% !important;
+  height: 105% !important;          /* ХИТРОСТЬ: сделали картинку на 4% выше контейнера! */
+  max-height: unset !important;
+  object-fit: cover !important;     
+  object-position: center 30% !important; /* Фокусируемся чуть выше центра, намертво утапливая нижнюю полосу под рамку */
+  display: block !important;
+  
+  /* Принудительное повышение резкости */
+  image-rendering: -webkit-optimize-contrast !important;
+  image-rendering: high-quality !important;
+}
+
+/* АДАПТИВ ДЛЯ МОБИЛЬНЫХ СМАРТФОНОВ (ВЕРТИКАЛЬНЫЙ ЭКРАН) */
+@media (max-width: 768px) and (orientation: portrait) {
+  .channel-banner-container {
+    width: 100% !important;
+    height: 90px !important;       /* Аккуратная высота для узкого экрана телефона */
+    border-radius: 12px !important; 
+    margin-bottom: 20px !important;
+  }
+  .channel-banner-img {
+    height: 105% !important;       /* Сохраняем 4% скрытия полос и для мобилок! */
+    object-position: center center !important; /* На вертикальном мобильном центрируем ровно посередине */
+  }
+}
+
+/* ЕСЛИ ТЕЛЕФОН ПОВЕРНУЛИ НАБОК (ГОРИЗОНТАЛЬНО) */
+@media (max-width: 900px) and (orientation: landscape) {
+  .channel-banner-container {
+    height: 120px !important;
+  }
+}
 
 
 

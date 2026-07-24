@@ -65,7 +65,7 @@ class Channel < ApplicationRecord
     true
   end
 
-  # ОФИЦИАЛЬНЫЙ МЕТОД ОБНОВЛЕНИЯ МЕТАДАННЫХ (АВАТАРКА + ОБЛОЖКА БАННЕРА)
+  # ОФИЦИАЛЬНЫЙ МЕТОД ОБНОВЛЕНИЯ МЕТАДАННЫХ (АВАТАРКА + ОБЛОЖКА БАННЕРА) - ИСПРАВЛЕННЫЙ
   def fetch_avatar_from_api
     api_key = Rails.application.config.youtube_api_key
     return if api_key.blank? || youtube_channel_id.blank?
@@ -82,14 +82,17 @@ class Channel < ApplicationRecord
         item = data.dig("items", 0)
         return false unless item
 
-        # 1. Вытаскиваем аватарку
+        # 1. ВОЗВРАЩЕНО НА МЕСТО: Вытаскиваем аватарку
         avatar_url_from_api = item.dig("snippet", "thumbnails", "high", "url") ||
                               item.dig("snippet", "thumbnails", "medium", "url")
 
-        # 2. Вытаскиваем сочную узкую обложку (баннер) канала
+        # 2. Вытаскиваем оригинальную обложку (баннер) канала высокой чёткости
         banner_url_from_api = item.dig("brandingSettings", "image", "bannerExternalUrl")
-        # Google отдает баннер без параметров, добавим технический хвост для идеального отображения на ПК:
-        banner_url_from_api = "#{banner_url_from_api}=w1060-fcrop64=1,00005a57ffffaa57-k-no-nd-v1" if banner_url_from_api.present?
+
+        if banner_url_from_api.present?
+          # ВОЗВРАЩАЕМ 2560px: Максимальное HD-качество + канонический десктопный маркер кадрирования
+          banner_url_from_api = "#{banner_url_from_api}=w2560-fcrop64=1,00005a57ffffaa57-k-no-nd-v1"
+        end
 
         # Жестко пишем оба параметра в базу данных PostgreSQL за один микро-запрос!
         updates = {}

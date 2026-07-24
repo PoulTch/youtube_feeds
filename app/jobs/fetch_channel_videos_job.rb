@@ -11,7 +11,11 @@ class FetchChannelVideosJob < ApplicationJob
     # 2. АВТОПИЛОТ РЕАЛЬНЫХ ДАТ И ВРЕМЕНИ ЧЕРЕЗ GOOGLE API v3 (ИСПРАВЛЕННЫЙ)
     api_key = Rails.application.config.youtube_api_key
     # ДОБАВИЛИ .to_a в конце, чтобы зафиксировать массив из 500 роликов в памяти компьютера
-    videos_to_update = channel.videos.where(duration_seconds: nil).or(channel.videos.where(views_count: nil)).limit(500).to_a
+    # УМНЫЙ АВТОПИЛОТ: Обновляем ролики без статистики ИЛИ те, у которых статистика не обновлялась больше 24 часов!
+    videos_to_update = channel.videos.where(duration_seconds: nil)
+                              .or(channel.videos.where(views_count: nil))
+                              .or(channel.videos.where("updated_at < ?", 1.day.ago))
+                              .limit(500).to_a
 
     if api_key.present? && videos_to_update.any?
       # .each_slice(50) берет по 50 видео за раз и крутит внутренний цикл
