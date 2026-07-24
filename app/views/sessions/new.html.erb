@@ -8,12 +8,14 @@
 
   <div style="background: #ffffff; padding: 40px; border-radius: 16px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); width: 100%; max-width: 360px; text-align: center; border: 1px solid #e8e8e8;">
     
-    <!-- ЛОГОТИП СИСТЕМЫ (ЛОКАЛЬНЫЙ SVG) -->
+    <!-- ЛОГОТИП СИСТЕМЫ (ИСПРАВЛЕННЫЙ HD-КАНОН YOUTUBE) -->
     <div style="font-size: 1.8rem; font-weight: bold; margin-bottom: 30px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-      <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="#000000" style="width: 32px; height: 32px;"><path d="M8.051 1.999h.089c.822.003 4.987.033 6.11.335a2.01 2.01 0 0 1 1.415 1.42c.3 1.12.3 3.48.3 3.48s0 2.36-.3 3.48a2.02 2.02 0 0 1-1.415 1.419c-1.123.3-5.288.3-6.11.335h-.089c-.822-.003-4.987-.033-6.11-.335a2.02 2.02 0 0 1-1.415-1.419C.3 10.34.3 7.98.3 7.98s0-2.36.3-3.48A2.01 2.01 0 0 1 2.015 2.3c1.123-.3 5.288-.3 6.11-.335zM6.5 5.5v5l4.25-2.5L6.5 5.5z"/></svg>
-      <span style="color: #ff0000;">MyChannels</span>
+      <!-- Наш идеальный симметричный SVG на холсте 24x24 без задираний и обрезаний! -->
+      <svg xmlns="http://w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000" class="yt-svg-icon" style="width: 32px; height: 32px; flex-shrink: 0; display: block; overflow: visible;">
+        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+      </svg>
+      <span style="color: #ff0000; line-height: 1; display: inline-block;">MyChannels</span>
     </div>
-
 
     <!-- СООБЩЕНИЯ ОБ ОШИБКАХ -->
     <% if flash[:alert] %>
