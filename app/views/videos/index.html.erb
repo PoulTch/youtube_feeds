@@ -61,28 +61,51 @@
     </div>
   <% end %>
 
+  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК (ОБЩИЕ ВКЛАДКИ ДЛЯ ВСЕХ АВТОРОВ) ================= -->
+  <h2 style="margin: 0 0 10px 0; font-size: 1.6rem; font-weight: bold; color: #0f0f0f;">✨ Общая лента контента</h2>
 
-  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК (ВОССТАНОВЛЕНО) ================= -->
-  <h2 style="margin: 0 0 20px 0; font-size: 1.6rem; font-weight: bold; color: #0f0f0f;">✨ Общая лента контента</h2>
+  <!-- УМНЫЕ ПЕРЕКЛЮЧАТЕЛИ ВКЛАДОК НА ГЛАВНОЙ -->
+  <div class="tabs-container" style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #e8e8e8; padding-bottom: 12px;">
+    <a href="<%= root_path(tab: 'video') %>" 
+       style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
+              background: <%= @current_tab == 'video' ? '#0f0f0f' : '#f2f2f2' %>; 
+              color: <%= @current_tab == 'video' ? '#ffffff' : '#0f0f0f' %>;">
+      📺 Видео
+    </a>
+    
+    <a href="<%= root_path(tab: 'shorts') %>" 
+       style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
+              background: <%= @current_tab == 'shorts' ? '#0f0f0f' : '#f2f2f2' %>; 
+              color: <%= @current_tab == 'shorts' ? '#ffffff' : '#0f0f0f' %>;">
+      🩳 Shorts
+    </a>
+    
+    <a href="<%= root_path(tab: 'stream') %>" 
+       style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
+              background: <%= @current_tab == 'stream' ? '#0f0f0f' : '#f2f2f2' %>; 
+              color: <%= @current_tab == 'stream' ? '#ffffff' : '#0f0f0f' %>;">
+      🔴 Стримы
+    </a>
+  </div>
 
-  <!-- Сетка для видео-карточек общей ленты -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+  <!-- Сетка для видео-карточек общей ленты (АДАПТИВНАЯ) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '180px' : '280px' %>, 1fr)); gap: 24px;">
     <% @videos.each do |video| %>
       <div style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
         
         <!-- Ссылка на видео вокруг превью -->
         <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
           <% if video.thumbnail_url.present? %>
-            <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+            <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" 
+                 style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; object-fit: cover; display: block;">
           <% else %>
-            <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
+            <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
           <% end %>
           
-          <% if video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
+          <% if @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
             <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
               <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
             </div>
-          ```
           <% end %>
         </a>
 
@@ -95,18 +118,17 @@
         </div>
 
         <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
-        <div style="padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+        <div style="padding: 14px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <h3 style="margin: 0 0 8px 0; font-size: 1rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+            <h3 style="margin: 0 0 8px 0; font-size: 0.95rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600;">
               <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
                 <%= video.title %>
               </a>
             </h3>
             
-            <!-- МИКРО-АВАТАРКА АВТОРСТВА В ОБЩЕЙ ЛЕНТЕ -->
-            <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+            <p style="margin: 0 0 4px 0; font-size: 0.8rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
               <% if video.channel.avatar_url.present? %>
-                <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; flex-shrink: 0;">
+                <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%;">
               <% else %>
                 <span style="font-size: 0.85rem;">🔴</span>
               <% end %>
@@ -116,18 +138,18 @@
             </p>
           </div>
           
-          <div style="margin-top: 12px; font-size: 0.8rem; color: #909090;">
+          <div style="margin-top: 8px; font-size: 0.75rem; color: #909090;">
             <% if video.published_at.present? && video.published_at.respond_to?(:strftime) %>
               Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
             <% else %>
               Опубликовано: Скоро (Анонс)
             <% end %>
           </div>
-        </div> <!-- Конец блока padding: 16px -->
+        </div>
 
-      </div> <!-- Конец карточки видео -->
+      </div>
     <% end %>
-  </div> <!-- Конец сетки grid -->
+  </div>
 
   <!-- ПАГИНАЦИЯ PAGY -->
   <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
@@ -135,3 +157,5 @@
   </div>
 
 </div>
+
+

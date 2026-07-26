@@ -35,10 +35,16 @@
 
 <!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК С КНОПКОЙ ОТПИСКИ СПРАВА -->
 <div class="channel-navigation-bar">
-  <!-- Вкладки (Видео и Плейлисты) -->
-  <div class="channel-tabs-list">
-    <a href="<%= channel_page_path(@channel, tab: 'videos') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'videos' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'videos' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+  <!-- Вкладки (Видео, Shorts, Стримы и Плейлисты) -->
+  <div class="channel-tabs-list" style="display: flex; gap: 20px;">
+    <a href="<%= channel_page_path(@channel, tab: 'video') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'video' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'video' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
       🎥 Видео
+    </a>
+    <a href="<%= channel_page_path(@channel, tab: 'shorts') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'shorts' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'shorts' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+      🩳 Shorts
+    </a>
+    <a href="<%= channel_page_path(@channel, tab: 'stream') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'stream' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'stream' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+      🔴 Стримы
     </a>
     <a href="<%= channel_page_path(@channel, tab: 'playlists') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'playlists' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'playlists' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
       📋 Плейлисты
@@ -55,16 +61,16 @@
                   class: "channel-unsubscribe-btn",
                   onmouseover: "this.style.background='#cc0000'; this.style.color='#ffffff'",
                   onmouseout: "this.style.background='#f2f2f2'; this.style.color='#0f0f0f'" do %>
-      <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
       Отписаться
     <% end %>
   </div>
 </div>
 
-<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ -->
-<% if @current_tab == 'videos' %>
+<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ (ВКЛЮЧЕН ДЛЯ ВСЕХ ВИДЕО-ВКЛАДОК) -->
+<% if @current_tab != 'playlists' %>
   <div class="channel-sorting-bar">
-    <a href="<%= channel_page_path(@channel, tab: 'videos', sort: 'desc') %>" 
+    <a href="<%= channel_page_path(@channel, tab: @current_tab, sort: 'desc') %>" 
        style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
               background: <%= @current_sort == 'desc' ? '#0f0f0f' : '#f2f2f2' %>; 
               color: <%= @current_sort == 'desc' ? '#ffffff' : '#0f0f0f' %>;"
@@ -72,7 +78,7 @@
        onmouseout="if('<%= @current_sort %>' !== 'desc') this.style.background='#f2f2f2'">
       ✨ Сначала новые
     </a>
-    <a href="<%= channel_page_path(@channel, tab: 'videos', sort: 'asc') %>" 
+    <a href="<%= channel_page_path(@channel, tab: @current_tab, sort: 'asc') %>" 
        style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
               background: <%= @current_sort == 'asc' ? '#0f0f0f' : '#f2f2f2' %>; 
               color: <%= @current_sort == 'asc' ? '#ffffff' : '#0f0f0f' %>;"
@@ -93,7 +99,7 @@
         <% @playlists.each do |playlist| %>
           <div style="display: flex; flex-direction: column; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.04); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
             
-            <!-- ОБЛОЖКА-ПАПКА: Теперь ведёт в НАШЕ внутреннее меню! -->
+            <!-- ОБЛОЖКА-ПАПКА -->
             <a href="<%= playlist_page_path(playlist) %>" style="position: relative; display: block; aspect-ratio: 16/9; background: #e0e0e0; overflow: hidden; border-radius: 12px;">
               <% if playlist.thumbnail_url.present? %>
                 <img src="<%= playlist.thumbnail_url %>" alt="" style="width: 100%; height: 100%; object-fit: cover;">
@@ -106,7 +112,7 @@
               </div>
             </a>
 
-            <!-- НАЗВАНИЕ ПЛЕЙЛИСТА: Тоже ведёт к нам в приложение -->
+            <!-- НАЗВАНИЕ ПЛЕЙЛИСТА -->
             <div style="padding: 12px 4px;">
               <h3 style="margin: 0; font-size: 0.95rem; font-weight: bold; color: #0f0f0f; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
                 <a href="<%= playlist_page_path(playlist) %>" style="text-decoration: none; color: #0f0f0f;">
@@ -115,7 +121,6 @@
               </h3>
             </div>
           </div>
-
         <% end %>
       </div>
     <% else %>
@@ -128,27 +133,31 @@
     <% end %>
 
   <% else %>
-    <!-- ================= СТАНДАРТНАЯ ВКЛАДКА ВИДЕО (ИСПРАВЛЕНЫ УГОЛКИ) ================= -->
+    <!-- ================= ДИНАМИЧЕСКИЕ ВИДЕО-ВКЛАДКИ (ВИДЕО / SHORTS / СТРИМЫ) ================= -->
     <% if @videos.any? %>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+      
+      <!-- ХИТРОСТЬ: Если вкладка shorts — делаем карточки узкими (180px) под мобильный формат 9/16 -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '180px' : '280px' %>, 1fr)); gap: 24px;">
         <% @videos.each do |video| %>
-          <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
             
-            <!-- ИСПРАВЛЕНО: Скругляем ТОЛЬКО верхние углы ссылки-обёртки (12px 12px 0 0) -->
+            <!-- Превью ролика со скруглением верхних углов -->
             <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px 12px 0 0;">
               <% if video.thumbnail_url.present? %>
-                <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
+                <!-- ХИТРОСТЬ: Для шортсов — 9/16, для классических видео и стримов — 16/9! -->
+                <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; object-fit: cover; display: block;">
               <% else %>
-                <!-- ИСПРАВЛЕНО: Заглушке тоже скругляем только верхние углы -->
-                <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem; border-radius: 12px 12px 0 0;">Нет превью</div>
+                <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem; border-radius: 12px 12px 0 0;">Нет превью</div>
               <% end %>
               
-              <% if video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
+              <!-- Время показываем на видео и стримах (у шортсов скрываем) -->
+              <% if @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
                 <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
                   <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
                 </div>
               <% end %>
 
+              <!-- Полоса прогресса -->
               <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
                 <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
                 <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
@@ -158,25 +167,25 @@
             </a>
 
             <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
-            <div style="padding: 12px 4px 4px 12px;"> <!-- Чуть увеличили левый отступ для красоты -->
-              <h2 style="font-size: 1rem; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
-                <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
-                  <%= video.title %>
-                </a>
-              </h2>
-              
-              <!-- МИКРО-АВАТАРКА АВТОРСТВА ПОД ПРЕВЬЮ -->
-              <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                <% if video.channel.avatar_url.present? %>
-                  <!-- ИСПРАВЛЕНО: Добавили класс micro-avatar, чтобы стили не конфликтовали -->
-                  <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
-                <% end %>
-                <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
-                  <%= video.channel.title %>
-                </a>
-              </p>
+            <div style="padding: 12px 8px 8px 12px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
+              <div>
+                <h2 style="font-size: <%= @current_tab == 'shorts' ? '0.9rem' : '1rem' %>; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-weight: 600;">
+                  <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
+                    <%= video.title %>
+                  </a>
+                </h2>
+                
+                <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                  <% if video.channel.avatar_url.present? %>
+                    <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                  <% end %>
+                  <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
+                    <%= video.channel.title %>
+                  </a>
+                </p>
+              </div>
 
-              <p style="margin: 0; font-size: 0.8rem; color: #606060;">
+              <p style="margin: 6px 0 0 0; font-size: 0.75rem; color: #909090;">
                 <%= video.published_at.strftime("%d.%m.%Y в %H:%M") if video.published_at %>
               </p>
             </div>
@@ -185,18 +194,26 @@
         <% end %>
       </div>
 
-            <!-- 🎯 ВОТ СЮДА ВСТАВЛЯЕМ БЛОК ПАГИНАЦИИ PAGY -->
+      <!-- БЛОК ПАГИНАЦИИ PAGY -->
       <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
         <%== @pagy.series_nav %>
       </div>
 
     <% else %>
-      <!-- Заглушка, если на вкладке Видео действительно пусто -->
+      <!-- Динамическая заглушка, если на вкладке пусто -->
       <div style="text-align: center; padding: 60px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc; margin-top: 20px;">
-        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">📦</span>
-        <h3 style="margin: 0 0 5px 0; font-weight: bold; color: #0f0f0f;">В ленте этого канала пока пусто</h3>
-        <p style="margin: 0; font-size: 0.9rem;">Нажмите чёрную кнопку выше, чтобы проверить наличие новых видеороликов через RSS.</p>
+        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">
+          <%= @current_tab == 'shorts' ? '🩳' : (@current_tab == 'stream' ? '🔴' : '📦') %>
+        </span>
+        <h3 style="margin: 0 0 5px 0; font-weight: bold; color: #0f0f0f;">
+          <%= @current_tab == 'shorts' ? 'Шортсы ещё не найдены' : (@current_tab == 'stream' ? 'Прямых трансляций пока нет' : 'В ленте этого канала пока пусто') %>
+        </h3>
+        <p style="margin: 0; font-size: 0.9rem;">
+          Нажмите чёрную кнопку «Загрузить весь архив» выше, чтобы наполнить эту вкладку!
+        </p>
       </div>
     <% end %>
   <% end %>
 </div>
+
+

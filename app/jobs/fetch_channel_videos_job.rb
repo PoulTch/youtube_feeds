@@ -11,7 +11,8 @@ class FetchChannelVideosJob < ApplicationJob
     # 2. АВТОПИЛОТ РЕАЛЬНЫХ ДАТ И ВРЕМЕНИ ЧЕРЕЗ GOOGLE API v3 (ИСПРАВЛЕННЫЙ)
     api_key = Rails.application.config.youtube_api_key
     # ДОБАВИЛИ .to_a в конце, чтобы зафиксировать массив из 500 роликов в памяти компьютера
-    # УМНЫЙ АВТОПИЛОТ: Обновляем ролики без статистики ИЛИ те, у которых статистика не обновлялась больше 24 часов!
+    # ТОТАЛЬНЫЙ СКАНЕР ПЕРФЕКЦИОНИСТА:
+    # БЫСТРЫЙ УМНЫЙ АВТОПИЛОТ: Обновляем только ролики без статистики ИЛИ те, что не обновлялись больше 24 часов
     videos_to_update = channel.videos.where(duration_seconds: nil)
                               .or(channel.videos.where(views_count: nil))
                               .or(channel.videos.where("updated_at < ?", 1.day.ago))
@@ -39,6 +40,9 @@ class FetchChannelVideosJob < ApplicationJob
                 views = item.dig("statistics", "viewCount").to_i
                 likes = item.dig("statistics", "likeCount").to_i
 
+                # ОФИЦИАЛЬНЫЙ МАРКЕР СТРИМОВ ОТ GOOGLE: может быть 'live', 'upcoming', 'completed' или 'none'
+                live_status = item.dig("snippet", "liveBroadcastContent").to_s
+
                 # 2. Вытаскиваем длительность ролика
                 iso_duration = item.dig("contentDetails", "duration")
 
@@ -53,17 +57,30 @@ class FetchChannelVideosJob < ApplicationJob
                   end
                 end
 
+                # ЖЕЛЕЗОБЕТОННЫЙ ГЕНЕТИЧЕСКИЙ ОТПЕЧАТОК GOOGLE API v3
+                # Принимает официальные системные значения: 'live', 'upcoming', 'completed' или 'none'
+                if live_status == "live" || live_status == "upcoming" || live_status == "completed"
+                  detected_type = "stream" # Поймали стрим по официальному системному паспорту Google!
+                elsif seconds > 0 && seconds <= 60
+                  detected_type = "shorts" # Канонический лимит коротких видео на YT
+                else
+                  detected_type = "video"
+                end
+
+
                 video = channel.videos.find_by(youtube_video_id: v_id)
                 if video
                   updates = {}
                   updates[:duration_seconds] = seconds if seconds > 0
                   updates[:published_at] = Time.parse(real_date_str) if real_date_str.present?
-                  # ИСПРАВЛЕНО: Указали правильные имена колонок из миграции (views_count и likes_count)
                   updates[:views_count] = views if views > 0
                   updates[:likes_count] = likes if likes > 0
 
+                  # НАМЕРТВО сохраняем определенный тип контента в базу данных!
+                  updates[:video_type] = detected_type
+
                   video.update_columns(updates) if updates.any?
-                  Rails.logger.info "--> [API УСПЕХ] Синхронизированы просмотры и лайки для: #{v_id}"
+                  Rails.logger.info "--> [API УСПЕХ] Синхронизированы данные и ТИП КОНТЕНТА (#{detected_type}) для: #{v_id}"
                 end
               end
             end
@@ -76,5 +93,8 @@ class FetchChannelVideosJob < ApplicationJob
 
     # 3. Автопилот аватарок и баннеров
     channel.fetch_avatar_from_api
+
+    # 4. Автопилот плейлистов и карточек плейлистов
+    channel.fetch_playlist_cards_from_api
   end
 end

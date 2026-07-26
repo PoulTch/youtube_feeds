@@ -26,7 +26,7 @@ class Channel < ApplicationRecord
     channel
   end
 
-  # Метод для скачивания видеороликов конкретного канала
+  # Метод для скачивания video-роликов конкретного канала
   def fetch_videos
     puts "=== [РОБОТ] Начинаю скачивать видео для канала: #{title} (ID: #{youtube_channel_id}) ==="
 
@@ -39,31 +39,56 @@ class Channel < ApplicationRecord
       return false
     end
 
+    # ВОТ ЭТА СПАСИТЕЛЬНАЯ СТРОЧКА БЫЛА СЛУЧАЙНО СТЕРТА:
     doc = REXML::Document.new(response.body)
     puts "=== [РОБОТ] XML успешно скачан. Начинаю парсить ролики... ==="
 
     doc.each_element("feed/entry") do |entry|
-      video_id = entry.elements["yt:videoId"]&.text
+      # ИСПОЛЬЗУЕМ СВЕРХТОЧНЫЙ ПОИСК БЕЗ ЗАВЯЗКИ НА НАСТРОЙКИ NAMESPACES СЕРВЕРА
+      video_id = entry.elements["*[local-name()='videoId']"]&.text
       title = entry.elements["title"]&.text
       published_at = entry.elements["published"]&.text
 
-      thumb_element = entry.elements["media:group/media:thumbnail"]
-      thumbnail_url = thumb_element ? thumb_element.attributes["url"] : nil
+      # Ищем группу media:group и внутри нее thumbnail / description
+      media_group = entry.elements["*[local-name()='group']"]
+      thumbnail_url = nil
+      description = nil
 
-      description = entry.elements["media:group/media:description"]&.text
+      if media_group
+        thumb_node = media_group.elements["*[local-name()='thumbnail']"]
+        thumbnail_url = thumb_node.attributes["url"] if thumb_node
 
-      next if video_id.nil?
+        desc_node = media_group.elements["*[local-name()='description']"]
+        description = desc_node&.text
+      end
+
+      # Если вдруг локальный поиск не дал результатов, пробуем старый канонический XML-путь
+      video_id ||= entry.elements["yt:videoId"]&.text
+
+      next if video_id.blank?
 
       video = videos.find_or_initialize_by(youtube_video_id: video_id)
       video.title = title
-      video.published_at = published_at
+
+      # ЖЕЛЕЗНЫЙ КОНТРОЛЬ ВРЕМЕНИ: Парсим дату, и если она улетела в будущее из-за часовых поясов ПК —
+      # жестко ставим текущее время, чтобы Pagy мгновенно вывел ролик на экран!
+      parsed_time = published_at.present? ? Time.parse(published_at) : Time.current
+      video.published_at = parsed_time > Time.current ? Time.current : parsed_time
+
       video.thumbnail_url = thumbnail_url
       video.description = description
-      video.save
+
+      # НАМЕРТВО маркируем как video, чтобы сразу выкатить на экран
+      video.video_type = "video" if video.video_type.blank?
+
+      if video.save
+        puts "--> [РОБОТ СХЕМА] Успешно сохранен RSS-ролик: #{video_id}"
+      end
     end
 
     true
   end
+
 
   # ОФИЦИАЛЬНЫЙ МЕТОД ОБНОВЛЕНИЯ МЕТАДАННЫХ (АВАТАРКА + ОБЛОЖКА БАННЕРА) - ИСПРАВЛЕННЫЙ
   def fetch_avatar_from_api
@@ -111,8 +136,49 @@ class Channel < ApplicationRecord
     false
   end
 
+  # СВЕРХЭКОНОМНЫЙ АВТОМАТИЧЕСКИЙ СБОР КАРТОЧЕК ПЛЕЙЛИСТОВ (БЕЗ СКАЧИВАНИЯ САМИХ РОЛИКОВ)
+  def fetch_playlist_cards_from_api
+    api_key = Rails.application.config.youtube_api_key
+    return if api_key.blank? || youtube_channel_id.blank?
 
-  # ВОЗВРАЩЕН ИЗ НЕБЫТИЯ: Вспомогательный метод класса для пробития редиректов Гугла
+    playlists_url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=#{youtube_channel_id}&maxResults=50&key=#{api_key}"
+
+    begin
+      # Пользуемся твоим методом с пробитием редиректов Гугла!
+      response = Channel.fetch_with_redirects(playlists_url)
+      if response && response.is_a?(Net::HTTPSuccess)
+        playlists_data = JSON.parse(response.body)
+        if playlists_data["items"].present?
+          playlists_data["items"].each do |item|
+            p_id = item["id"]
+            snippet = item["snippet"]
+            content_details = item["contentDetails"]
+
+            if p_id.present? && snippet
+              playlist = playlists.find_or_initialize_by(youtube_playlist_id: p_id)
+              playlist.title = snippet["title"]
+
+              if snippet["thumbnails"].present?
+                thumb_data = snippet["thumbnails"]["maxres"] || snippet["thumbnails"]["high"] || snippet["thumbnails"]["medium"] || snippet["thumbnails"]["default"]
+                playlist.thumbnail_url = thumb_data["url"] if thumb_data
+              end
+
+              if content_details && content_details["itemCount"].present?
+                playlist.video_count = content_details["itemCount"].to_i
+              end
+
+              playlist.save!(validate: false)
+            end
+          end
+          puts "--> [API GOOGLE] Успешно подтянуты карточки плейлистов для канала: #{self.title}"
+        end
+      end
+    rescue => e
+      Rails.logger.error "Ошибка автоматического сбора карточек плейлистов: #{e.message}"
+    end
+  end
+
+  # Вспомогательный метод класса для пробития редиректов Гугла
   def self.fetch_with_redirects(url_value, limit = 5)
     return nil if limit.zero?
 
