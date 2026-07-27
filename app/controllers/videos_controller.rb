@@ -64,7 +64,7 @@ class VideosController < ApplicationController
 
         if api_key.present? && videos_to_update.any?
           video_ids = videos_to_update.map(&:youtube_video_id).join(",")
-          url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet,statistics&id=#{video_ids}&key=#{api_key}"
+          url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,liveStreamingDetails,snippet,statistics&id=#{video_ids}&key=#{api_key}"
           begin
             uri = URI.parse(url)
             response = Net::HTTP.get_response(uri)
@@ -85,6 +85,27 @@ class VideosController < ApplicationController
                   views = item.dig("statistics", "viewCount").to_i
                   likes = item.dig("statistics", "likeCount").to_i
 
+                  # 4. СУПЕР-КАЛИБРОВКА ПО ОФИЦИАЛЬНЫМ СТАНДАРТАМ YOUTUBE (БЕЗ ГАДАНИЯ ПО СЛОВАМ)
+                  live_status = item.dig("snippet", "liveBroadcastContent").to_s
+                  has_live_details = item["liveStreamingDetails"].present? # Блок существует ТОЛЬКО у стримов!
+
+                  is_stream = live_status == "live" ||
+                              live_status == "upcoming" ||
+                              live_status == "completed" ||
+                              has_live_details || # Поймали архивный эфир по его истории вещания!
+
+                  is_shorts = seconds > 0 && seconds <= 180 && !is_stream # Официальные 180 секунд для Shorts!
+
+                  # ИДЕАЛЬНАЯ ИЕРАРХИЯ: Сначала жестко отсекаем Shorts (до 3 минут),
+                  # и только потом проверяем стримы и длинные видео!
+                  if is_shorts
+                    detected_type = "shorts" # Шортсы Белковского теперь в идеальной безопасности!
+                  elsif is_stream
+                    detected_type = "stream"
+                  else
+                    detected_type = "video"
+                  end
+
                   v = channel.videos.find_by(youtube_video_id: v_id)
                   if v
                     updates = {}
@@ -92,6 +113,9 @@ class VideosController < ApplicationController
                     updates[:published_at] = Time.parse(real_date_str) if real_date_str.present?
                     updates[:views_count] = views if views > 0
                     updates[:likes_count] = likes if likes > 0
+
+                    # НАМЕРТВО записываем сорт контента в базу данных PostgreSQL прямо сейчас!
+                    updates[:video_type] = detected_type
 
                     # Сохраняем пачкой все новые данные в PostgreSQL
                     v.update_columns(updates) if updates.any?
@@ -107,7 +131,10 @@ class VideosController < ApplicationController
         # 3. МГНОВЕННЫЙ СБОР МЕТАДАННЫХ: Качаем оригинальную аватарку и баннер
         channel.fetch_avatar_from_api
 
-        flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Все тайминги и оформление на месте."
+        # 4. СВЕРХЭКОНОМНЫЙ СБОР КАРТОЧЕК ПЛЕЙЛИСТОВ (БЕЗ СКАЧИВАНИЯ РОЛИКОВ)
+        channel.fetch_playlist_cards_from_api
+
+        flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Все тайминги, плейлисты и оформление загружены мгновенно."
         redirect_to channel_page_path(channel), data: { turbo: false } and return
       else
         flash[:alert] = "Не удалось добавить канал. Проверьте правильность ID."

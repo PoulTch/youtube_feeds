@@ -22,7 +22,7 @@ class FetchChannelVideosJob < ApplicationJob
       # .each_slice(50) берет по 50 видео за раз и крутит внутренний цикл
       videos_to_update.each_slice(50) do |batch|
         video_ids = batch.map(&:youtube_video_id).join(",")
-        url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet,statistics&id=#{video_ids}&key=#{api_key}"
+        url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,liveStreamingDetails,snippet,statistics&id=#{video_ids}&key=#{api_key}"
 
         begin
           uri = URI.parse(url)
@@ -57,16 +57,25 @@ class FetchChannelVideosJob < ApplicationJob
                   end
                 end
 
-                # ЖЕЛЕЗОБЕТОННЫЙ ГЕНЕТИЧЕСКИЙ ОТПЕЧАТОК GOOGLE API v3
-                # Принимает официальные системные значения: 'live', 'upcoming', 'completed' или 'none'
-                if live_status == "live" || live_status == "upcoming" || live_status == "completed"
-                  detected_type = "stream" # Поймали стрим по официальному системному паспорту Google!
-                elsif seconds > 0 && seconds <= 60
-                  detected_type = "shorts" # Канонический лимит коротких видео на YT
-                else
-                  detected_type = "video"
-                end
+                # ЖЕЛЕЗОБЕТОННЫЙ ГЕНЕТИЧЕСКИЙ ОТПЕЧАТОК YOUTUBE БЕЗ ГАДАНИЯ ПО СЛОВАМ
+                has_live_details = item["liveStreamingDetails"].present? # Блок существует ТОЛЬКО у стримов!
 
+                is_stream = live_status == "live" ||
+                            live_status == "upcoming" ||
+                            live_status == "completed" ||
+                            has_live_details || # Поймали архивный эфир по его истории вещания!
+
+                is_shorts = seconds > 0 && seconds <= 180 && !is_stream # Официальные 180 секунд для Shorts!
+
+                  # ИДЕАЛЬНАЯ ИЕРАРХИЯ: Сначала жестко отсекаем Shorts (до 3 минут),
+                  # и только потом проверяем стримы и длинные видео!
+                  if is_shorts
+                    detected_type = "shorts" # Шортсы Белковского теперь в идеальной безопасности!
+                  elsif is_stream
+                    detected_type = "stream"
+                  else
+                    detected_type = "video"
+                  end
 
                 video = channel.videos.find_by(youtube_video_id: v_id)
                 if video
