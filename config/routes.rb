@@ -24,6 +24,10 @@ Rails.application.routes.draw do
   # ДОБАВЛЕНО: Автономный маршрут для просмотра содержимого плейлиста внутри MyChannels!
   get "playlists/:id" => "videos#show_playlist", as: :playlist_page
 
+  # НАШИ НОВЫЕ ТАКТИЧЕСКИЕ ССЫЛКИ ДЛЯ КНОПОК ПЛЕЙЛИСТА:
+  post "playlists/:id/sync"  => "videos#sync_playlist_videos",  as: :sync_playlist_videos
+  post "playlists/:id/clear" => "videos#clear_playlist_videos", as: :clear_playlist_videos
+
   # Маршрут для импорта файла подписок
   post "import_subscriptions" => "videos#import_subscriptions", as: :import_subscriptions
 

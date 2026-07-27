@@ -441,4 +441,104 @@ class VideosController < ApplicationController
     flash[:notice] = "Архив успешно обновлен! Видео и официальные Стримы разделены по вкладкам со 100% точностью."
     redirect_to channel_page_path(channel) and return
   end
+
+  # СИНХРОНИЗАЦИЯ АБСОЛЮТНО ВСЕХ РОЛИКОВ ПЛЕЙЛИСТА (С ПОДДЕРЖКОЙ СТРАНИЦ NEXT_PAGE_TOKEN)
+  def sync_playlist_videos
+    playlist = Playlist.find(params[:id])
+    channel = playlist.channel
+    api_key = Rails.application.config.youtube_api_key
+
+    if api_key.blank?
+      flash[:alert] = "Ключ YouTube API не настроен."
+      redirect_to playlist_page_path(playlist) and return
+    end
+
+    new_video_ids = []
+    next_page_token = nil
+
+    begin
+      # КРУТИМ ЦИКЛ, ПОКА У ГУГЛА НЕ ЗАКОНЧАТСЯ СТРАНИЦЫ С ВИДЕО
+      loop do
+        # Динамически подставляем &pageToken= если мы идем на вторую и далее страницы
+        token_param = next_page_token.present? ? "&pageToken=#{next_page_token}" : ""
+        url = "https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails,snippet&playlistId=#{playlist.youtube_playlist_id}&maxResults=50&key=#{api_key}#{token_param}"
+
+        uri = URI.parse(url)
+        response = Net::HTTP.get_response(uri)
+
+        break unless response.is_a?(Net::HTTPSuccess)
+        data = JSON.parse(response.body)
+        break if data["items"].blank?
+
+        data["items"].each do |item|
+          v_id = item.dig("contentDetails", "videoId")
+          snippet = item["snippet"]
+
+          if v_id.present? && snippet
+            video = channel.videos.find_or_initialize_by(youtube_video_id: v_id)
+            video.title = snippet["title"]
+            video.published_at = snippet["publishedAt"]
+            video.video_type = "video"
+            video.playlist_id = playlist.id
+
+            if snippet["thumbnails"].present?
+              thumb_data = snippet["thumbnails"]["maxres"] || snippet["thumbnails"]["high"] || snippet["thumbnails"]["medium"] || snippet["thumbnails"]["default"]
+              video.thumbnail_url = thumb_data["url"] if thumb_data
+            end
+
+            video.save!(validate: false)
+            new_video_ids << v_id
+          end
+        end
+
+        # Читаем маркер следующей страницы. Если его нет — выходим из цикла!
+        next_page_token = data["nextPageToken"]
+        break if next_page_token.blank?
+      end
+
+      # ПОДТЯГИВАЕМ ПРОСМОТРЫ И ЛАЙКИ ПАЧКАМИ ПО 50 ШТУК ДЛЯ ВСЕХ НАЙДЕННЫХ РОЛИКОВ
+      if new_video_ids.any?
+        new_video_ids.each_slice(50) do |slice_ids|
+          video_ids_str = slice_ids.join(",")
+          stats_url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,statistics&id=#{video_ids_str}&key=#{api_key}"
+          stats_res = Net::HTTP.get_response(URI.parse(stats_url))
+
+          if stats_res.is_a?(Net::HTTPSuccess)
+            stats_data = JSON.parse(stats_res.body)
+            if stats_data["items"].present?
+              stats_data["items"].each do |v_item|
+                db_v = channel.videos.find_by(youtube_video_id: v_item["id"])
+                if db_v
+                  iso_dur = v_item.dig("contentDetails", "duration")
+                  secs = iso_dur.present? ? ActiveSupport::Duration.parse(iso_dur).to_i : 0
+                  views = v_item.dig("statistics", "viewCount").to_i
+
+                  db_v.update_columns(duration_seconds: secs, views_count: views)
+                end
+              end
+            end
+          end
+        end
+        flash[:notice] = "Плейлист «#{playlist.title}» полностью синхронизирован! Загружено абсолютно все ролики: #{new_video_ids.count}."
+      else
+        flash[:notice] = "В этом плейлисте нет видеороликов."
+      end
+
+    rescue => e
+      flash[:alert] = "Не удалось полностью загрузить плейлист: #{e.message}"
+    end
+
+    redirect_to playlist_page_path(playlist)
+  end
+
+  # МГНОВЕННАЯ ОЧИСТКА ПЛЕЙЛИСТА ДЛЯ СБЕРЕЖЕНИЯ ДИСКА VPS
+  def clear_playlist_videos
+    playlist = Playlist.find(params[:id])
+
+    # Чтобы не захламлять базу, мы полностью стираем ролики, привязанные строго к этому плейлисту
+    playlist.videos.delete_all
+
+    flash[:notice] = "Память сервера очищена! Все видеоролики из плейлиста «#{playlist.title}» удалены."
+    redirect_to playlist_page_path(playlist)
+  end
 end

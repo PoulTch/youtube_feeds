@@ -1,5 +1,7 @@
 class Video < ApplicationRecord
   belongs_to :channel
+  # ЖЕЛЕЗНЫЙ МОСТ: Привязываем ролик к плейлисту (опционально!)
+  belongs_to :playlist, optional: true
 
   # Метод возвращает честный процент просмотра от 0 до 100
   def progress_percentage
