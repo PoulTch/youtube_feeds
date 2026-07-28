@@ -134,6 +134,9 @@ class VideosController < ApplicationController
         # 4. СВЕРХЭКОНОМНЫЙ СБОР КАРТОЧЕК ПЛЕЙЛИСТОВ (БЕЗ СКАЧИВАНИЯ РОЛИКОВ)
         channel.fetch_playlist_cards_from_api
 
+        # ОЧИЩАЕМ КЭШ САЙДБАРА: Заставляем Rails мгновенно перерисовать меню слева!
+        Rails.cache.delete([current_user, "sidebar_channels"])        
+
         flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Все тайминги, плейлисты и оформление загружены мгновенно."
         redirect_to channel_page_path(channel), data: { turbo: false } and return
       else
@@ -281,8 +284,8 @@ class VideosController < ApplicationController
     @channel = Channel.find(params[:id])
     @channel.destroy # Теперь благодаря :delete_all в модели это сработает мгновенно!
 
-    # ПРИНУДИТЕЛЬНЫЙ СБРОС КЭША: Сайдбар обновится в ту же миллисекунду!
-    Rails.cache.delete("sidebar_channels_user_#{session[:user_id]}")
+    # ИСПРАВЛЕНО: Теперь ключ кэша строго совпадает с методом добавления!
+    Rails.cache.delete([current_user, "sidebar_channels"])
 
     flash[:notice] = "Канал «#{@channel.title}» и все его видео успешно удалены."
     redirect_to root_path

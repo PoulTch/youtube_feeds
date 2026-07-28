@@ -23,8 +23,8 @@ class ApplicationController < ActionController::Base
   helper_method :current_user
 
   def load_sidebar_channels
-    # Кэшируем сайдбар на 5 минут. Rails посчитает его один раз, а потом будет отдавать мгновенно!
-    @sidebar_channels = Rails.cache.fetch("sidebar_channels_user_#{session[:user_id]}", expires_in: 5.minutes) do
+    # ИСПРАВЛЕНО: Теперь ключ кэша строго привязан к массиву [current_user, "sidebar_channels"]!
+    @sidebar_channels = Rails.cache.fetch([current_user, "sidebar_channels"], expires_in: 5.minutes) do
       Channel.select("channels.*, COALESCE((SELECT SUM(videos.watched_seconds) FROM videos WHERE videos.channel_id = channels.id), 0) AS total_watch_time")
             .order("total_watch_time DESC, channels.title ASC")
             .to_a
