@@ -1,16 +1,16 @@
 <div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px;">
 
-  <!-- ================= БЛОК: ПРОДОЛЖИТЬ ПРОСМОТР (ИСТОРИЯ) ================= -->
+  <!-- ================= БЛОК: ПРОДОЛЖИТЬ ПРОСМОТР (ИСТОРИЯ ИЗ ГИТХАБА БЕЗ ЭМОДЗИ) ================= -->
   <% if @history_videos.any? %>
-    <div style="margin-bottom: 40px; background: #f9f9f9; padding: 24px; border-radius: 16px; box-shadow: inset 0 1px 4px rgba(0,0,0,0.03);">
-      <h2 style="margin: 0 0 16px 0; font-size: 1.4rem; font-weight: bold; color: #0f0f0f; display: flex; align-items: center; gap: 8px;">
-        ⏳ Продолжить просмотр
+    <div style="margin-bottom: 40px; background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #f0f0f0;">
+      <h2 style="margin: 0 0 16px 0; font-size: 1.1rem; font-weight: bold; color: #0f0f0f; display: flex; align-items: center; gap: 8px;">
+        Продолжить просмотр
       </h2>
       
       <!-- Горизонтальная карусель для экономии места на экране -->
-      <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin;">
+      <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
         <% @history_videos.each do |video| %>
-          <div style="flex: 0 0 240px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between;">
+          <div style="flex: 0 0 240px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
             
             <!-- ПРЕВЬЮ ИСТОРИИ -->
             <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
@@ -22,7 +22,7 @@
               
               <!-- Плашка времени -->
               <% if video.duration_seconds.to_i > 0 %>
-                <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; font-family: monospace;">
+                <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; font-family: monospace; z-index: 5;">
                   <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
                 </div>
               <% end %>
@@ -30,8 +30,8 @@
               <!-- Красная полоса прогресса -->
               <% if video.duration_seconds.to_i > 0 %>
                 <% progress = (video.watched_seconds.to_f / video.duration_seconds * 100).clamp(0, 100) %>
-                <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3);">
-                  <div style="width: <%= progress %>%; height: 100%; background: #ff0000;"></div>
+                <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
+                  <div style="width: <%= progress %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
                 </div>
               <% end %>
             </a>
@@ -45,9 +45,10 @@
               <!-- Красивый горизонтальный ряд: кругляш аватарки + название канала -->
               <p style="margin: 0; font-size: 0.75rem; color: #ff0000; font-weight: bold; display: flex; align-items: center; gap: 6px; overflow: hidden;">
                 <% if video.channel.avatar_url.present? %>
-                  <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 14px; height: 14px; flex-shrink: 0;">
+                  <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; object-fit: cover;">
                 <% else %>
                   <span style="font-size: 0.75rem; flex-shrink: 0;">🔴</span>
+                </p>
                 <% end %>
                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <%= video.channel.title %>
@@ -61,39 +62,38 @@
     </div>
   <% end %>
 
-  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК (ОБЩИЕ ВКЛАДКИ ДЛЯ ВСЕХ АВТОРОВ) ================= -->
-  <h2 style="margin: 0 0 10px 0; font-size: 1.6rem; font-weight: bold; color: #0f0f0f;">✨ Общая лента контента</h2>
-
-  <!-- УМНЫЕ ПЕРЕКЛЮЧАТЕЛИ ВКЛАДОК НА ГЛАВНОЙ -->
+  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК (ТЕПЕРЬ СТИЛЬНЫЙ МИНИМАЛИЗМ БЕЗ ЭМОДЗИ) ================= -->
   <div class="tabs-container" style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #e8e8e8; padding-bottom: 12px;">
     <a href="<%= root_path(tab: 'video') %>" 
        style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
               background: <%= @current_tab == 'video' ? '#0f0f0f' : '#f2f2f2' %>; 
               color: <%= @current_tab == 'video' ? '#ffffff' : '#0f0f0f' %>;">
-      📺 Видео
+      Видео
     </a>
     
     <a href="<%= root_path(tab: 'shorts') %>" 
        style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
               background: <%= @current_tab == 'shorts' ? '#0f0f0f' : '#f2f2f2' %>; 
               color: <%= @current_tab == 'shorts' ? '#ffffff' : '#0f0f0f' %>;">
-      🩳 Shorts
+      Shorts
     </a>
     
     <a href="<%= root_path(tab: 'stream') %>" 
        style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
               background: <%= @current_tab == 'stream' ? '#0f0f0f' : '#f2f2f2' %>; 
               color: <%= @current_tab == 'stream' ? '#ffffff' : '#0f0f0f' %>;">
-      🔴 Стримы
+      Трансляции
     </a>
   </div>
 
-  <!-- Сетка для видео-карточек общей ленты (АДАПТИВНАЯ) -->
+  <!-- Сетка для видео-карточек общей ленты (АДАПТИВНАЯ + С ЭФФЕКТОМ НАВЕДЕНИЯ) -->
   <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '180px' : '280px' %>, 1fr)); gap: 24px;">
     <% @videos.each do |video| %>
-      <div style="display: flex; flex-direction: column; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+      <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);" 
+           onmouseover="this.style.transform='scale(1.01)'" 
+           onmouseout="this.style.transform='scale(1)'">
         
-        <!-- Ссылка на видео вокруг превью -->
+        <!-- Ссылка на video вокруг превью -->
         <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
           <% if video.thumbnail_url.present? %>
             <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" 
@@ -102,14 +102,21 @@
             <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
           <% end %>
           
-          <% if @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
+          <!-- УМНАЯ ПЛАШКА ВРЕМЕНИ И АНОНСОВ ДЛЯ ГЛАВНОЙ С ЗАЩИТОЙ ОТ ПРИЗРАКОВ -->
+          <% is_fresh_announcement = video.published_at.present? && (video.published_at > 7.days.ago || video.published_at.to_time > Time.now) %>
+          <% is_upcoming_announcement = (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.present? && video.published_at.to_time > Time.now) %>
+          
+          <% if is_upcoming_announcement %>
+            <div style="position: absolute; bottom: 8px; right: 8px; background: #cc0000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 5; letter-spacing: 0.5px;">
+              СКОРО
+            </div>
+          <% elsif @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
             <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
               <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
             </div>
           <% end %>
-        </a>
 
-        <!-- Полоса прогресса на карточке общей ленты -->
+       <!-- Полоса прогресса на карточке общей ленты -->
         <div style="width: 100%; height: 4px; background: #e0e0e0; position: relative; margin-top: -4px; z-index: 10;">
           <div 
             data-static-progress="<%= video.youtube_video_id %>"
@@ -139,13 +146,18 @@
           </div>
           
           <div style="margin-top: 8px; font-size: 0.75rem; color: #909090;">
-            <% if video.published_at.present? && video.published_at.respond_to?(:strftime) %>
-              Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
+            <% if video.published_at.present? %>
+              <% if (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.to_time > Time.now) %>
+                Опубликовано: Скоро (Анонс)
+              <% else %>
+                Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
+              <% end %>
             <% else %>
               Опубликовано: Скоро (Анонс)
             <% end %>
           </div>
-        </div>
+
+       </div>
 
       </div>
     <% end %>
@@ -157,5 +169,4 @@
   </div>
 
 </div>
-
-
+           

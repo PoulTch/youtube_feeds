@@ -14,7 +14,7 @@
   </div>
 
     <div style="flex: 1; min-width: 300px;">
-    <h1 style="margin: 0 0 4px 0; font-size: 2rem; font-weight: bold; color: #0f0f0f;">📋 Сборник: <%= @playlist.title %></h1>
+    <h1 style="margin: 0 0 4px 0; font-size: 2rem; font-weight: bold; color: #0f0f0f;">Сборник: <%= @playlist.title %></h1>
     <p style="margin: 0 0 16px 0; color: #606060; font-size: 0.95rem;">
       Автор: <strong style="color: #ff0000;"><%= @channel.title %></strong> • Всего видео на YouTube: <strong><%= @playlist.video_count || 0 %></strong> • В локальной базе: <strong><%= @videos.size %></strong>
     </p>
@@ -31,7 +31,7 @@
                     onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.01)'",
                     onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
                     onmousedown: "this.style.transform='scale(0.99)'" do %>
-        🚀 Синхронизировать с YouTube API
+        Синхронизировать с YouTube API
       <% end %>
 
       <!-- КНОПКА 2: ОЧИСТКА ПАМЯТИ СЕРВЕРА (ОТОБРАЖАЕТСЯ, ТОЛЬКО ЕСЛИ ЕСТЬ ВИДЕО) -->
@@ -44,7 +44,7 @@
                       onmouseover: "this.style.background='#fff5f5'; this.style.transform='scale(1.01)'",
                       onmouseout: "this.style.background='#fff'; this.style.transform='scale(1)'",
                       onmousedown: "this.style.transform='scale(0.99)'" do %>
-          🗑️ Очистить память сервера
+          Очистить память сервера
         <% end %>
       <% end %>
     </div>
@@ -61,7 +61,7 @@
             color: <%= @current_sort == 'desc' ? '#ffffff' : '#0f0f0f' %>;"
      onmouseover="if('<%= @current_sort %>' !== 'desc') this.style.background='#e6e6e6'"
      onmouseout="if('<%= @current_sort %>' !== 'desc') this.style.background='#f2f2f2'">
-    ✨ Сначала новые
+    Сначала новые
   </a>
 
   <!-- Тег: Сначала Старые -->
@@ -71,7 +71,7 @@
             color: <%= @current_sort == 'asc' ? '#ffffff' : '#0f0f0f' %>;"
      onmouseover="if('<%= @current_sort %>' !== 'asc') this.style.background='#e6e6e6'"
      onmouseout="if('<%= @current_sort %>' !== 'asc') this.style.background='#f2f2f2'">
-    ⏳ Сначала старые
+    Сначала старые
   </a>
 
 </div>
@@ -90,13 +90,21 @@
               <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
             <% end %>
             
-            <% if video.duration_seconds.to_i > 0 %>
+            <!-- УМНАЯ ПЛАШКА ВРЕМЕНИ И АНОНСОВ ДЛЯ ПЛЕЙЛИСТОВ С ЗАЩИТОЙ ОТ ПРИЗРАКОВ -->
+            <% is_fresh_announcement = video.published_at.present? && (video.published_at > 7.days.ago || video.published_at.to_time > Time.now) %>
+            <% is_upcoming_announcement = (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.present? && video.published_at.to_time > Time.now) %>
+            
+            <% if is_upcoming_announcement %>
+              <div style="position: absolute; bottom: 8px; right: 8px; background: #cc0000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 5; letter-spacing: 0.5px;">
+                СКОРО
+              </div>
+            <% elsif video.duration_seconds.to_i > 0 %>
               <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
                 <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
               </div>
             <% end %>
-            
-            <!-- Полоса локального прогресса (СОХРАНЕНА!) -->
+
+           <!-- Полоса локального прогресса -->
             <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
               <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
               <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
@@ -111,20 +119,32 @@
                 <%= video.title %>
               </a>
             </h2>
+            
+            <!-- КРАСИВЫЙ СИНХРОН ДАТЫ С ТЕКСТОМ АНОНСА В ПЛЕЙЛИСТЕ -->
             <p style="margin: 0; font-size: 0.8rem; color: #606060;">
-              <%= video.published_at.strftime("%d.%m.%Y в %H:%M") if video.published_at %>
+              <% if video.published_at.present? %>
+                <% if (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.to_time > Time.now) %>
+                  Скоро (Анонс)
+                <% else %>
+                  <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
+                <% end %>
+              <% end %>
             </p>
+
           </div>
 
         </div>
       <% end %>
     </div>
   <% else %>
-    <!-- ДИНАМИЧЕСКАЯ ЗАГЛУШКА С ОБНОВЛЕННЫМ СТИЛЕМ -->
-    <div style="text-align: center; padding: 60px; color: #606060; background: #f9f9f9; border-radius: 12px; border: 2px dashed #e5e5e5;">
-      <span style="font-size: 3rem; display: block; margin-bottom: 12px;">📦</span>
-      <p style="margin: 0 0 12px 0; font-weight: bold; color: #0f0f0f; font-size: 1.1rem;">Ролики этого плейлиста ещё не синхронизированы.</p>
-      <p style="margin: 0; font-size: 0.9rem; color: #606060;">Нажмите чёрную кнопку «Синхронизировать» в шапке, чтобы загрузить актуальный список видеороликов через YouTube API без захламления памяти сервера.</p>
+    <!-- ДИНАМИЧЕСКАЯ ЗАГЛУШКА С ОБНОВЛЕННЫМ СТИЛЕМ БЕЗ МУСОРА И ЯЩИКОВ -->
+    <div style="text-align: center; padding: 60px 20px; color: #606060; background: #f9f9f9; border-radius: 12px; border: 2px dashed #e5e5e5;">
+      <p style="margin: 0 0 8px 0; font-weight: bold; color: #0f0f0f; font-size: 1.2rem;">Ролики этого плейлиста ещё не синхронизированы.</p>
+      <p style="margin: 0; font-size: 0.95rem; color: #606060; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.5;">
+        Нажмите чёрную кнопку «Синхронизировать» в шапке, чтобы загрузить актуальный список видеороликов через YouTube API без захламления памяти сервера.
+      </p>
     </div>
   <% end %>
+
 </div>
+

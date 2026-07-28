@@ -29,25 +29,25 @@
                 onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
                 onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
                 onmousedown: "this.style.transform='scale(0.98)'" do %>
-    🚀 Загрузить весь архив видео через yt-dlp
+    Загрузить весь архив видео через yt-dlp
   <% end %>
 </header>
 
-<!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК С КНОПКОЙ ОТПИСКИ СПРАВА -->
+<!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК С КНОПКОЙ ОТПИСКИ СПРАВА (БЕЗ ЭМОДЗИ И С «ТРАНСЛЯЦИЯМИ») -->
 <div class="channel-navigation-bar">
-  <!-- Вкладки (Видео, Shorts, Стримы и Плейлисты) -->
+  <!-- Вкладки (Видео, Shorts, Трансляции и Плейлисты) -->
   <div class="channel-tabs-list" style="display: flex; gap: 20px;">
     <a href="<%= channel_page_path(@channel, tab: 'video') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'video' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'video' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
-      🎥 Видео
+      Видео
     </a>
     <a href="<%= channel_page_path(@channel, tab: 'shorts') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'shorts' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'shorts' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
-      🩳 Shorts
+      Shorts
     </a>
     <a href="<%= channel_page_path(@channel, tab: 'stream') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'stream' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'stream' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
-      🔴 Стримы
+      Трансляции
     </a>
     <a href="<%= channel_page_path(@channel, tab: 'playlists') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'playlists' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'playlists' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
-      📋 Плейлисты
+      Плейлисты
     </a>
   </div>
 
@@ -61,13 +61,13 @@
                   class: "channel-unsubscribe-btn",
                   onmouseover: "this.style.background='#cc0000'; this.style.color='#ffffff'",
                   onmouseout: "this.style.background='#f2f2f2'; this.style.color='#0f0f0f'" do %>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+      <svg xmlns="http://w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
       Отписаться
     <% end %>
   </div>
 </div>
 
-<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ (ВКЛЮЧЕН ДЛЯ ВСЕХ ВИДЕО-ВКЛАДОК) -->
+<!-- БЛОК ПЕРЕКЛЮЧЕНИЯ ХРОНОЛОГИИ (ВКЛЮЧЕН ДЛЯ ВСЕХ ВИДЕО-ВКЛАДОК, МИНИМАЛИЗМ БЕЗ ЭМОДЗИ) -->
 <% if @current_tab != 'playlists' %>
   <div class="channel-sorting-bar">
     <a href="<%= channel_page_path(@channel, tab: @current_tab, sort: 'desc') %>" 
@@ -76,7 +76,7 @@
               color: <%= @current_sort == 'desc' ? '#ffffff' : '#0f0f0f' %>;"
        onmouseover="if('<%= @current_sort %>' !== 'desc') this.style.background='#e6e6e6'"
        onmouseout="if('<%= @current_sort %>' !== 'desc') this.style.background='#f2f2f2'">
-      ✨ Сначала новые
+      Сначала новые
     </a>
     <a href="<%= channel_page_path(@channel, tab: @current_tab, sort: 'asc') %>" 
        style="text-decoration: none; padding: 6px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: bold; transition: background 0.2s, color 0.2s;
@@ -84,7 +84,7 @@
               color: <%= @current_sort == 'asc' ? '#ffffff' : '#0f0f0f' %>;"
        onmouseover="if('<%= @current_sort %>' !== 'asc') this.style.background='#e6e6e6'"
        onmouseout="if('<%= @current_sort %>' !== 'asc') this.style.background='#f2f2f2'">
-      ⏳ Сначала старые
+      Сначала старые
     </a>
   </div>
 <% end %>
@@ -133,6 +133,7 @@
     <% end %>
 
   <% else %>
+
     <!-- ================= ДИНАМИЧЕСКИЕ ВИДЕО-ВКЛАДКИ (ВИДЕО / SHORTS / СТРИМЫ) ================= -->
     <% if @videos.any? %>
       
@@ -150,14 +151,22 @@
                 <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem; border-radius: 12px 12px 0 0;">Нет превью</div>
               <% end %>
               
-              <!-- Время показываем на видео и стримах (у шортсов скрываем) -->
-              <% if @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
+              <!-- УМНАЯ ПЛАШКА ВРЕМЕНИ И АНОНСОВ (ПОЛНАЯ НЕЗАВИСИМОСТЬ ОТ ЧАСОВЫХ ПОЯСОВ) -->
+              <!-- ЗАЩИТА ОТ ПРИЗРАКОВ: Анонс считается легитимным, только если он свежий (до 7 дней) или из будущего! -->
+              <% is_fresh_announcement = video.published_at.present? && (video.published_at > 7.days.ago || video.published_at.to_time > Time.now) %>
+              <% is_upcoming_announcement = (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.present? && video.published_at.to_time > Time.now) %>
+              
+              <% if is_upcoming_announcement %>
+                <div style="position: absolute; bottom: 8px; right: 8px; background: #cc0000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 5; letter-spacing: 0.5px;">
+                  СКОРО
+                </div>
+              <% elsif @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
                 <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
                   <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
                 </div>
               <% end %>
 
-              <!-- Полоса прогресса -->
+             <!-- Полоса прогресса -->
               <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
                 <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
                 <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
@@ -185,9 +194,17 @@
                 </p>
               </div>
 
+              <!-- ТЕКСТОВАЯ ДАТА АНОНСА С ФИЛЬТРОМ ПРИЗРАКОВ -->
               <p style="margin: 6px 0 0 0; font-size: 0.75rem; color: #909090;">
-                <%= video.published_at.strftime("%d.%m.%Y в %H:%M") if video.published_at %>
+                <% if video.published_at.present? %>
+                  <% if (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.to_time > Time.now) %>
+                    Скоро (Анонс)
+                  <% else %>
+                    <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
+                  <% end %>
+                <% end %>
               </p>
+
             </div>
 
           </div>
@@ -200,20 +217,19 @@
       </div>
 
     <% else %>
-      <!-- Динамическая заглушка, если на вкладке пусто -->
+      <!-- Динамическая заглушка, если на вкладке пусто (ПРЕМИУМ МИНИМАЛИЗМ БЕЗ ЭМОДЗИ) -->
       <div style="text-align: center; padding: 60px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc; margin-top: 20px;">
-        <span style="font-size: 3rem; display: block; margin-bottom: 10px;">
-          <%= @current_tab == 'shorts' ? '🩳' : (@current_tab == 'stream' ? '🔴' : '📦') %>
-        </span>
-        <h3 style="margin: 0 0 5px 0; font-weight: bold; color: #0f0f0f;">
+        <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #0f0f0f; font-size: 1.2rem;">
           <%= @current_tab == 'shorts' ? 'Шортсы ещё не найдены' : (@current_tab == 'stream' ? 'Прямых трансляций пока нет' : 'В ленте этого канала пока пусто') %>
         </h3>
-        <p style="margin: 0; font-size: 0.9rem;">
+        <p style="margin: 0; font-size: 0.95rem; color: #606060;">
           Нажмите чёрную кнопку «Загрузить весь архив» выше, чтобы наполнить эту вкладку!
         </p>
       </div>
     <% end %>
+
   <% end %>
 </div>
+
 
 
