@@ -20,39 +20,56 @@
   
   <p class="channel-video-count">Всего видео в базе: <%= @channel.videos.count %></p>
   
-  <!-- КНОПКА ЗАПУСКА РОБОТА -->
-  <%= button_to fetch_channel_archive_path(@channel), 
-                method: :post, 
-                local: true,
-                data: { turbo: false },
-                style: "background: #0f0f0f; color: #ffffff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.1s;",
-                onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
-                onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
-                onmousedown: "this.style.transform='scale(0.98)'" do %>
-    Загрузить весь архив видео через yt-dlp
+  <!-- КНОПКА ЗАПУСКА АРХИВА (УМНАЯ ГИБРИДНАЯ КАРТА ЗАГРУЗКИ) -->
+  <% if @channel.videos.count > 40 %>
+    <!-- Если глубокий архив уже на сервере — выводим спокойную кнопку обновления -->
+    <%= button_to fetch_channel_archive_path(@channel), 
+                  method: :post, 
+                  local: true,
+                  data: { turbo: false },
+                  form: { onsubmit: "return confirm('Полный архив этого канала уже сохранен локально. Вы действительно хотите запустить повторную глубокую перепроверку всех вкладок через yt-dlp?');" },
+                  style: "background: #f2f2f2; color: #0f0f0f; border: 1px solid #ccc; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; transition: background 0.2s;",
+                  onmouseover: "this.style.background='#e6e6e6'",
+                  onmouseout: "this.style.background='#f2f2f2'" do %>
+      Перепроверить весь архив через yt-dlp
+    <% end %>
+  <% else %>
+    <!-- Если канал свежий и в нем только 15 базовых роликов RSS — горит черная призывная кнопка -->
+    <%= button_to fetch_channel_archive_path(@channel), 
+                  method: :post, 
+                  local: true,
+                  data: { turbo: false },
+                  form: { onsubmit: "return confirm('Вы уверены, что хотите запустить глубокое сканирование полного архива канала? Это скачает все видео, трансляции и шортсы автора.');" },
+                  style: "background: #0f0f0f; color: #ffffff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.1s;",
+                  onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
+                  onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'" do %>
+      Загрузить весь архив видео через yt-dlp
+    <% end %>
   <% end %>
+
 </header>
 
-<!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК С КНОПКОЙ ОТПИСКИ СПРАВА (БЕЗ ЭМОДЗИ И С «ТРАНСЛЯЦИЯМИ») -->
-<div class="channel-navigation-bar">
-  <!-- Вкладки (Видео, Shorts, Трансляции и Плейлисты) -->
-  <div class="channel-tabs-list" style="display: flex; gap: 20px;">
-    <a href="<%= channel_page_path(@channel, tab: 'video') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'video' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'video' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+<!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК С КНОПКОЙ ОТПИСКИ СПРАВА (ПОЛНАЯ МОБИЛЬНАЯ АДАПТАЦИЯ) -->
+<div class="channel-navigation-bar" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e8e8e8; padding-bottom: 12px; margin-bottom: 25px; flex-wrap: wrap; gap: 16px;">
+  
+  <!-- Вкладки (Видео, Shorts, Трансляции и Плейлисты) — теперь адаптивно скроллятся на мобилках -->
+  <div class="channel-tabs-list" style="display: flex; gap: 20px; overflow-x: auto; white-space: nowrap; max-width: 100%; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 4px;">
+    <a href="<%= channel_page_path(@channel, tab: 'video') %>" style="text-decoration: none; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'video' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'video' ? '3px solid #0f0f0f' : '3px solid transparent' %>; padding-bottom: 8px; transition: color 0.2s;">
       Видео
     </a>
-    <a href="<%= channel_page_path(@channel, tab: 'shorts') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'shorts' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'shorts' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+    <a href="<%= channel_page_path(@channel, tab: 'shorts') %>" style="text-decoration: none; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'shorts' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'shorts' ? '3px solid #0f0f0f' : '3px solid transparent' %>; padding-bottom: 8px; transition: color 0.2s;">
       Shorts
     </a>
-    <a href="<%= channel_page_path(@channel, tab: 'stream') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'stream' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'stream' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+    <a href="<%= channel_page_path(@channel, tab: 'stream') %>" style="text-decoration: none; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'stream' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'stream' ? '3px solid #0f0f0f' : '3px solid transparent' %>; padding-bottom: 8px; transition: color 0.2s;">
       Трансляции
     </a>
-    <a href="<%= channel_page_path(@channel, tab: 'playlists') %>" style="text-decoration: none; padding-bottom: 12px; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'playlists' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'playlists' ? '3px solid #0f0f0f' : '3px solid transparent' %>; transition: color 0.2s;">
+    <a href="<%= channel_page_path(@channel, tab: 'playlists') %>" style="text-decoration: none; font-size: 1.1rem; font-weight: bold; color: <%= @current_tab == 'playlists' ? '#0f0f0f' : '#606060' %>; border-bottom: <%= @current_tab == 'playlists' ? '3px solid #0f0f0f' : '3px solid transparent' %>; padding-bottom: 8px; transition: color 0.2s;">
       Плейлисты
     </a>
   </div>
 
-  <!-- Кнопка отписки теперь логически живет здесь, в одном ряду с вкладками -->
-  <div class="channel-actions-box">
+  <!-- Кнопка отписки теперь мягко переносится вниз на узких экранах, не ломая верстку -->
+  <div class="channel-actions-box" style="flex-shrink: 0;">
     <%= button_to delete_channel_path(@channel), 
                   method: :delete, 
                   local: true,
@@ -61,7 +78,7 @@
                   class: "channel-unsubscribe-btn",
                   onmouseover: "this.style.background='#cc0000'; this.style.color='#ffffff'",
                   onmouseout: "this.style.background='#f2f2f2'; this.style.color='#0f0f0f'" do %>
-      <svg xmlns="http://w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
+      <svg xmlns="http://w3.org" viewBox="0 0 16 16" fill="currentColor" style="width: 14px; height: 14px; display: inline-block; vertical-align: middle;"><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/></svg>
       Отписаться
     <% end %>
   </div>

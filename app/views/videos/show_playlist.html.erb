@@ -19,32 +19,45 @@
       Автор: <strong style="color: #ff0000;"><%= @channel.title %></strong> • Всего видео на YouTube: <strong><%= @playlist.video_count || 0 %></strong> • В локальной базе: <strong><%= @videos.size %></strong>
     </p>
 
-    <!-- ПАНЕЛЬ КНОПОК УПРАВЛЕНИЯ ПЛЕЙЛИСТОМ -->
+    <!-- ПАНЕЛЬ КНОПОК УПРАВЛЕНИЯ ПЛЕЙЛИСТОМ (УМНАЯ + С ПОДТВЕРЖДЕНИЕМ) -->
     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
       
-      <!-- КНОПКА 1: СИНХРОНИЗАЦИЯ ЧЕРЕЗ GOOGLE API (РЕАКТИВНАЯ) -->
-      <%= button_to sync_playlist_videos_path(@playlist),
-                    method: :post,
-                    local: true,
-                    data: { turbo: false },
-                    style: "background: #0f0f0f; color: #ffffff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: background 0.2s, transform 0.1s;",
-                    onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.01)'",
-                    onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
-                    onmousedown: "this.style.transform='scale(0.99)'" do %>
-        Синхронизировать с YouTube API
-      <% end %>
-
-      <!-- КНОПКА 2: ОЧИСТКА ПАМЯТИ СЕРВЕРА (ОТОБРАЖАЕТСЯ, ТОЛЬКО ЕСЛИ ЕСТЬ ВИДЕО) -->
       <% if @videos.any? %>
+        <!-- Если ролики уже в базе — выводим легкую серую кнопку обновления -->
+        <%= button_to sync_playlist_videos_path(@playlist),
+                      method: :post,
+                      local: true,
+                      data: { turbo: false },
+                      form: { onsubmit: "return confirm('Ролики этого плейлиста уже загружены. Вы действительно хотите повторно синхронизировать данные с YouTube API?');" },
+                      style: "background: #f2f2f2; color: #0f0f0f; border: 1px solid #ccc; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;",
+                      onmouseover: "this.style.background='#e6e6e6'",
+                      onmouseout: "this.style.background='#f2f2f2'" do %>
+          Обновить плейлист
+        <% end %>
+
+        <!-- КНОПКА ОЧИСТКИ ПАМЯТИ СЕРВЕРА -->
         <%= button_to clear_playlist_videos_path(@playlist),
                       method: :post,
                       local: true,
-                      data: { turbo: false, confirm: "Вы уверены, что хотите удалить все ролики этого плейлиста из локальной базы?" },
-                      style: "background: #fff; color: #cc0000; border: 1px solid #cc0000; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.1s;",
-                      onmouseover: "this.style.background='#fff5f5'; this.style.transform='scale(1.01)'",
-                      onmouseout: "this.style.background='#fff'; this.style.transform='scale(1)'",
-                      onmousedown: "this.style.transform='scale(0.99)'" do %>
-          Очистить память сервера
+                      data: { turbo: false },
+                      form: { onsubmit: "return confirm('Вы уверены, что хотите удалить все ролики этого плейлиста из локальной базы?');" },
+                      style: "background: #fff; color: #cc0000; border: 1px solid #cc0000; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;",
+                      onmouseover: "this.style.background='#fff5f5'",
+                      onmouseout: "this.style.background='#fff'" do %>
+          Удалить плейлист
+        <% end %>
+
+      <% else %>
+        <!-- Если плейлист девственно пуст — горит полноценная черная ракета запуска -->
+        <%= button_to sync_playlist_videos_path(@playlist),
+                      method: :post,
+                      local: true,
+                      data: { turbo: false },
+                      form: { onsubmit: "return confirm('Запустить быструю синхронизацию элементов плейлиста через YouTube API?');" },
+                      style: "background: #0f0f0f; color: #ffffff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: background 0.2s;",
+                      onmouseover: "this.style.background='#333333'",
+                      onmouseout: "this.style.background='#0f0f0f'" do %>
+          Синхронизировать с YouTube API
         <% end %>
       <% end %>
     </div>
