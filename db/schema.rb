@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_22_095759) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_29_182329) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -22,6 +22,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_22_095759) do
     t.datetime "updated_at", null: false
     t.string "avatar_url"
     t.string "banner_url"
+    t.integer "subscriber_count"
   end
 
   create_table "playlists", force: :cascade do |t|

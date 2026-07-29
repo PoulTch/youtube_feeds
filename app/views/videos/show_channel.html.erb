@@ -9,44 +9,74 @@
 <header class="channel-main-header">
   
   <!-- Аватарка и Название по центру -->
-  <div class="channel-branding-box">
+  <div class="channel-branding-box" style="display: flex; align-items: center; gap: 16px;">
     <% if @channel.avatar_url.present? %>
-      <img src="<%= @channel.avatar_url %>" alt="" class="channel-avatar-img">
+      <img src="<%= @channel.avatar_url %>" alt="" class="channel-avatar-img" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
     <% else %>
-      <span class="channel-avatar-fallback">🔴</span>
+      <span class="channel-avatar-fallback" style="font-size: 2.5rem; flex-shrink: 0;">🔴</span>
     <% end %>
-    <h1 class="channel-main-title"><%= @channel.title %></h1>
+    
+    <!-- ТЕКСТОВЫЙ БЛОК: Выравнивает всё в идеальный структурированный блок -->
+    <div style="display: flex; flex-direction: column; align-items: flex-start; justify-content: center;">
+      <h1 class="channel-main-title" style="margin: 0 0 6px 0; font-size: 1.6rem; font-weight: bold; color: #0f0f0f; line-height: 1.2;"><%= @channel.title %></h1>
+      
+      <!-- СТАТИСТИКА В ОДИН РЯД В СТИЛЕ YOUTUBE (С ПОВЫШЕННОЙ ТОЧНОСТЬЮ ДО 1.3 МЛН) -->
+      <p style="margin: 0; color: #606060; font-size: 0.9rem; font-weight: 500; display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-wrap: wrap;">
+        <% if @channel.subscriber_count.present? && @channel.subscriber_count > 0 %>
+          <span><%= number_to_human(@channel.subscriber_count, precision: 3, locale: :ru).gsub('тыс.', 'тыс. подписчиков').gsub('млн', 'млн подписчиков') %></span>
+          <span style="color: #909090; font-weight: normal; margin: 0 2px;">•</span>
+        <% end %>
+        <span style="color: #606060;">Всего видео в базе: <strong style="color: #0f0f0f; font-weight: 600;"><%= @channel.videos.count %></strong></span>
+      </p>
+    </div>
   </div>
-  
-  <p class="channel-video-count">Всего видео в базе: <%= @channel.videos.count %></p>
-  
-  <!-- КНОПКА ЗАПУСКА АРХИВА (УМНАЯ ГИБРИДНАЯ КАРТА ЗАГРУЗКИ) -->
-  <% if @channel.videos.count > 40 %>
-    <!-- Если глубокий архив уже на сервере — выводим спокойную кнопку обновления -->
-    <%= button_to fetch_channel_archive_path(@channel), 
-                  method: :post, 
-                  local: true,
-                  data: { turbo: false },
-                  form: { onsubmit: "return confirm('Полный архив этого канала уже сохранен локально. Вы действительно хотите запустить повторную глубокую перепроверку всех вкладок через yt-dlp?');" },
-                  style: "background: #f2f2f2; color: #0f0f0f; border: 1px solid #ccc; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; transition: background 0.2s;",
-                  onmouseover: "this.style.background='#e6e6e6'",
-                  onmouseout: "this.style.background='#f2f2f2'" do %>
-      Перепроверить весь архив через yt-dlp
-    <% end %>
-  <% else %>
-    <!-- Если канал свежий и в нем только 15 базовых роликов RSS — горит черная призывная кнопка -->
-    <%= button_to fetch_channel_archive_path(@channel), 
-                  method: :post, 
-                  local: true,
-                  data: { turbo: false },
-                  form: { onsubmit: "return confirm('Вы уверены, что хотите запустить глубокое сканирование полного архива канала? Это скачает все видео, трансляции и шортсы автора.');" },
-                  style: "background: #0f0f0f; color: #ffffff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.1s;",
-                  onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
-                  onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'" do %>
-      Загрузить весь архив видео через yt-dlp
-    <% end %>
-  <% end %>
 
+  
+  <!-- Панель управления в шапке канала (ПОЛНАЯ АДАПТАЦИЯ И СИНХРОН КНОПОК) -->
+  <div style="display: flex; gap: 12px; align-items: center; margin-top: 20px; flex-wrap: wrap;">
+    
+    <!-- КНОПКА ОБНОВЛЕНИЯ МЕТАДАННЫХ И СТАТИСТИКИ (ТЕПЕРЬ С СОХРАНЕНИЕМ ВКЛАДКИ) -->
+    <%= button_to refresh_metadata_channel_path(@channel, tab: @current_tab),
+                  method: :post,
+                  local: true,
+                  data: { turbo: false },
+                  style: "background: #ffffff; color: #0f0f0f; border: 1px solid #ccc; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); transition: background 0.2s, transform 0.1s;",
+                  onmouseover: "this.style.background='#f2f2f2'; this.style.transform='scale(1.02)'",
+                  onmouseout: "this.style.background='#ffffff'; this.style.transform='scale(1)'",
+                  onmousedown: "this.style.transform='scale(0.98)'" do %>
+      Обновить метаданные API
+    <% end %>
+
+    <!-- 2. КНОПКА ЗАПУСКА АРХИВА (УМНАЯ ГИБРИДНАЯ КАРТА ЗАГРУЗКИ) -->
+    <% if @channel.videos.count > 40 %>
+      <!-- If the deep archive is already on the server, display the compact gray update button -->
+      <%= button_to fetch_channel_archive_path(@channel), 
+                    method: :post, 
+                    local: true,
+                    data: { turbo: false },
+                    form: { onsubmit: "return confirm('Полный архив этого канала уже сохранен локально. Вы действительно хотите запустить повторную глубокую перепроверку всех вкладок через yt-dlp?');" },
+                    style: "background: #f2f2f2; color: #0f0f0f; border: 1px solid #ccc; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.1s;",
+                    onmouseover: "this.style.background='#e6e6e6'; this.style.transform='scale(1.02)'",
+                    onmouseout: "this.style.background='#f2f2f2'; this.style.transform='scale(1)'",
+                    onmousedown: "this.style.transform='scale(0.98)'" do %>
+        Перепроверить весь архив через yt-dlp
+      <% end %>
+    <% else %>
+      <!-- If the channel is fresh and only has 15 basic RSS feeds, display the black rocket action button -->
+      <%= button_to fetch_channel_archive_path(@channel), 
+                    method: :post, 
+                    local: true,
+                    data: { turbo: false },
+                    form: { onsubmit: "return confirm('Вы уверены, что хотите запустить глубокое сканирование полного архива канала? Это скачает все видео, трансляции и шортсы автора.');" },
+                    style: "background: #0f0f0f; color: #ffffff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.1s;",
+                    onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
+                    onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
+                    onmousedown: "this.style.transform='scale(0.98)'" do %>
+        Загрузить весь архив видео через yt-dlp
+      <% end %>
+    <% end %>
+
+  </div>
 </header>
 
 <!-- СТИЛЬНЫЙ ВЕРХНИЙ ПЕРЕКЛЮЧАТЕЛЬ ВКЛАДОК С КНОПКОЙ ОТПИСКИ СПРАВА (ПОЛНАЯ МОБИЛЬНАЯ АДАПТАЦИЯ) -->

@@ -89,14 +89,13 @@ class Channel < ApplicationRecord
     true
   end
 
-
-  # ОФИЦИАЛЬНЫЙ МЕТОД ОБНОВЛЕНИЯ МЕТАДАННЫХ (АВАТАРКА + ОБЛОЖКА БАННЕРА) - ИСПРАВЛЕННЫЙ
+  # ОФИЦИАЛЬНЫЙ МЕТОД ОБНОВЛЕНИЯ МЕТАДАННЫХ (АВАТАРКА + ОБЛОЖКА БАННЕРА + ПОДПИСЧИКИ) - ИСПРАВЛЕННЫЙ
   def fetch_avatar_from_api
     api_key = Rails.application.config.youtube_api_key
     return if api_key.blank? || youtube_channel_id.blank?
 
-    # Добавляем в part параметр brandingSettings — именно там лежат баннеры-заставки!
-    url = "https://www.googleapis.com/youtube/v3/channels?part=snippet,brandingSettings&id=#{youtube_channel_id}&key=#{api_key}"
+    # ВНЕДРЕНО: Добавили statistics в part, чтобы забрать счётчик подписчиков
+    url = "https://www.googleapis.com/youtube/v3/channels?part=snippet,brandingSettings,statistics&id=#{youtube_channel_id}&key=#{api_key}"
 
     begin
       uri = URI.parse(url)
@@ -119,14 +118,18 @@ class Channel < ApplicationRecord
           banner_url_from_api = "#{banner_url_from_api}=w2560-fcrop64=1,00005a57ffffaa57-k-no-nd-v1"
         end
 
-        # Жестко пишем оба параметра в базу данных PostgreSQL за один микро-запрос!
+        # 3. ВНЕДРЕНО: Вытаскиваем точное число подписчиков из блока statistics
+        sub_count_from_api = item.dig("statistics", "subscriberCount")
+
+        # Жестко пишем все параметры в базу данных PostgreSQL за один микро-запрос!
         updates = {}
         updates[:avatar_url] = avatar_url_from_api if avatar_url_from_api.present?
         updates[:banner_url] = banner_url_from_api if banner_url_from_api.present?
+        updates[:subscriber_count] = sub_count_from_api.to_i if sub_count_from_api.present?
 
         if updates.any?
           self.update_columns(updates)
-          puts "--> [API GOOGLE] Успешно обновлены аватарка и БАННЕР для: #{self.title}"
+          puts "--> [API GOOGLE] Успешно обновлены аватарка, баннер и ПОДПИСЧИКИ для: #{self.title}"
           return true
         end
       end

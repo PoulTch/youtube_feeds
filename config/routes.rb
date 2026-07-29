@@ -17,6 +17,9 @@ Rails.application.routes.draw do
   # Маршрут для запуска сканирования полного архива канала через yt-dlp
   post "channels/:id/fetch_archive" => "videos#fetch_channel_archive", as: :fetch_channel_archive
 
+  # Маршрут для обновления метаданных конкретного канала
+  post 'channels/:id/refresh_metadata', to: 'videos#refresh_metadata', as: :refresh_metadata_channel
+
   # Новый маршрут для просмотра конкретного видео
   get "videos/:id" => "videos#show", as: :watch_video
   post "videos/:id/save_progress" => "videos#save_progress"

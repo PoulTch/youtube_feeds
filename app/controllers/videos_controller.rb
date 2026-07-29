@@ -544,4 +544,59 @@ class VideosController < ApplicationController
     flash[:notice] = "Память сервера очищена! Все видеоролики из плейлиста «#{playlist.title}» удалены."
     redirect_to playlist_page_path(playlist)
   end
+
+  # МЕТОД ДЛЯ РУЧНОГО ОБНОВЛЕНИЯ АВАТАРОК, БАННЕРОВ, ПОДПИСЧИКОВ, СЧЕТЧИКОВ ПРОСМОТРОВ И ЛАЙКОВ
+  def refresh_metadata
+    @channel = Channel.find(params[:id])
+    
+    # 1. Сначала обновляем общие данные самого автора через Google API
+    if @channel.fetch_avatar_from_api
+      
+      # 2. Вытаскиваем хэш-карту: ключ - оригинальный YouTube ID, значение - системный id строки в базе
+      video_map = @channel.videos.pluck(:youtube_video_id, :id).to_h
+      video_ids = video_map.keys.compact
+      api_key = Rails.application.config.youtube_api_key
+
+      if video_ids.any? && api_key.present?
+        # YouTube разрешает за один запрос обновлять не более 50 видео
+        video_ids.each_slice(50) do |slice|
+          url = "https://www.googleapis.com/youtube/v3/videos?part=statistics&id=#{slice.join(",")}&key=#{api_key}"
+          begin
+            uri = URI.parse(url)
+            response = Net::HTTP.get_response(uri)
+            if response.is_a?(Net::HTTPSuccess)
+              data = JSON.parse(response.body)
+              if data["items"].present?
+                data["items"].each do |item|
+                  v_id = item["id"]
+                  views = item.dig("statistics", "viewCount")
+                  likes = item.dig("statistics", "likeCount")
+                  
+                  # НАДЕЖНЫЙ ПОИСК: Находим точный системный ID строки из нашей хэш-карты
+                  db_id = video_map[v_id]
+                  if db_id
+                    # Жестко и гарантированно обновляем просмотры и лайки в SQL
+                    Video.where(id: db_id).update_all(
+                      views_count: views.to_i,
+                      likes_count: likes.to_i
+                    )
+                  end
+                end
+              end
+            end
+          rescue => e
+            Rails.logger.error "Ошибка обновления статистики видео: #{e.message}"
+          end
+        end
+      end
+
+      # Очищаем кэш сайдбара
+      Rails.cache.delete([current_user, "sidebar_channels"])
+      flash[:notice] = "Данные канала «#{@channel.title}» успешно актуализированы: точные подписчики, баннер, а также просмотры и лайки всех роликов обновлены."
+    else
+      flash[:alert] = "Не удалось обновить данные. Проверьте лимиты YouTube API."
+    end
+    
+    redirect_to channel_page_path(@channel, tab: params[:tab]), data: { turbo: false }
+  end
 end
