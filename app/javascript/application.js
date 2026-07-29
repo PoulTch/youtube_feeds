@@ -1,28 +1,34 @@
-// Configure your import map in config/importmap.rb. Read more: https://github.com/rails/importmap-rails
+// Configure your import map in config/importmap.rb. Read more: https://github.com
 import "@hotwired/turbo-rails"
 import "controllers"
 
-// Функция, которая ищет все полоски на экране и красит их из памяти Оперы
 function applyLocalProgressBars() {
+  console.log("--> [MyChannels JS] Запуск сканирования локального прогресса...");
+  
   document.querySelectorAll("[data-local-progress]").forEach(bar => {
     const youtubeId = bar.getAttribute("data-local-progress");
+    if (!youtubeId) return;
+
     const savedPercent = localStorage.getItem(`${youtubeId}_percent`);
     
     if (savedPercent !== null) {
-      bar.style.width = `${savedPercent}%`;
+      const percentInt = parseInt(savedPercent, 10);
       
-      // Если видео просмотрено более чем на 90%
-      if (parseInt(savedPercent, 10) >= 90) {
-        // Ищем именно карточку видео (поднимаемся до родительского flex-элемента самой сетки видео)
-        const videoCard = bar.closest("div[style*='width: 210px']") || bar.closest(".video-card") || bar.parentElement.parentElement;
-        if (videoCard && videoCard.style.display !== "none") {
-          videoCard.style.display = "none"; // Карточка мгновенно исчезает!
+      // Намертво красим полоску прогресса на основе localStorage браузера
+      bar.style.width = `${Math.min(percentInt, 100)}%`;
+      
+      // УМНАЯ КАРУСЕЛЬ: Если видео из карусели истории просмотрено более чем на 90%
+      if (percentInt >= 90) {
+        // Ищем карточку строго внутри карусели по нашему новому классу!
+        const historyCard = bar.closest(".history-card-item");
+        if (historyCard && historyCard.style.display !== "none") {
+          historyCard.style.display = "none"; // Карточка мгновенно и красиво исчезает ТОЛЬКО из истории!
+          console.log(`[MyChannels JS] Ролик ${youtubeId} скрыт из карусели истории (прогресс ${percentInt}%)`);
         }
       }
     }
   });
 }
-
 
 // Запускаем при первой загрузке страницы
 document.addEventListener("DOMContentLoaded", applyLocalProgressBars);

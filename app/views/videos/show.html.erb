@@ -1,29 +1,31 @@
-<!-- АДАПТИВНЫЙ УМНЫЙ КОНТЕЙНЕР ДЛЯ ПОЛНОГО СИНХРОНА ПЛЕЕРА НА ПК И НОУТБУКЕ -->
-<style>
-  .player-responsive-container {
-    max-width: 1200px; 
-    margin: 0; /* По умолчанию на ноутбуках и смартфонах аккуратно прижимаемся по сайдбару */
-    padding: 0 16px; 
-    box-sizing: border-box; 
-    width: 100%;
-  }
+<% content_for :title, "#{@video.title} — MyChannels" %>
 
-  /* Как только экран становится больше 1400px (большой монитор ПК) — центрируем плеер! */
-  @media (min-width: 1400px) {
+<!-- АДАПТИВНЫЙ УМНЫЙ КОНТЕЙНЕР ПЛЕЕРА + ВОЗВРАЩЕННЫЙ ТРЕКЕР ДЛЯ НАКАТЫВАНИЯ ПРОГРЕССА -->
+<div class="player-responsive-container" 
+     data-controller="video-player" 
+     data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" 
+     data-video-player-video-id-value="<%= @video.id %>">
+
+  <style>
     .player-responsive-container {
-      margin: 0 auto;
+      max-width: 1200px; 
+      margin: 0; 
+      padding: 0 16px; 
+      box-sizing: border-box; 
+      width: 100%;
     }
-  }
-</style>
+    @media (min-width: 1400px) {
+      .player-responsive-container {
+        margin: 0 auto;
+      }
+    }
+  </style>
 
-<div class="player-responsive-container">
-
-  <% content_for :title, "#{@video.title} — MyChannels" %>
   <!-- ВСТРОЕННЫЙ ПЛЕЕР YOUTUBE -->
   <div class="video-player">
     <iframe 
       id="youtube-player"
-      src="https://www.youtube.com/embed/<%= @video.youtube_video_id %>?autoplay=1&rel=0&enablejsapi=1&playsinline=1" 
+      src="https://youtube.com<%= @video.youtube_video_id %>?autoplay=1&rel=0&enablejsapi=1&playsinline=1" 
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
       allowfullscreen>
     </iframe>
