@@ -92,7 +92,8 @@
 <!-- СЕТКА КАРТОЧЕК ПЛЕЙЛИСТА -->
 <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px; margin-bottom: 60px;">
   <% if @videos.any? %>
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 24px;">
+
       <% @videos.each do |video| %>
         <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
           

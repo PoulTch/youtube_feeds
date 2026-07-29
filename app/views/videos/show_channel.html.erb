@@ -155,7 +155,9 @@
     <% if @videos.any? %>
       
       <!-- ХИТРОСТЬ: Если вкладка shorts — делаем карточки узкими (180px) под мобильный формат 9/16 -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '180px' : '280px' %>, 1fr)); gap: 24px;">
+      <!-- ИДЕАЛЬНАЯ СИММЕТРИЯ НА СТРАНИЦЕ КАНАЛА ДЛЯ ВИДЕО, SHORTS И ТРАНСЛЯЦИЙ -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '150px' : '240px' %>, 1fr)); gap: 24px;">
+
         <% @videos.each do |video| %>
           <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
             

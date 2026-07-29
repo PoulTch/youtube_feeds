@@ -1,19 +1,37 @@
-<div style="font-family: sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px;">
+<!-- АДАПТИВНЫЙ УМНЫЙ КОНТЕЙНЕР ДЛЯ ПОЛНОГО СИНХРОНА ПК И НОУТБУКА -->
+<style>
+  .main-responsive-container {
+    max-width: 1200px; 
+    margin: 0; /* По умолчанию на ноутбуках и мобилках прижимаемся ровно по сайдбару */
+    padding: 0 16px; 
+    box-sizing: border-box; 
+    width: 100%;
+  }
 
-  <!-- ================= БЛОК: ПРОДОЛЖИТЬ ПРОСМОТР (ИСТОРИЯ ИЗ ГИТХАБА БЕЗ ЭМОДЗИ) ================= -->
+  /* Как только экран становится больше 1400px (большой монитор ПК) — включаем центрирование! */
+  @media (min-width: 1400px) {
+    .main-responsive-container {
+      margin: 0 auto;
+    }
+  }
+</style>
+
+<div class="main-responsive-container">
+
+  <!-- ================= БЛОК: ПРОДОЛЖИТЬ ПРОСМОТР (ИСТОРИЯ) ================= -->
   <% if @history_videos.any? %>
     <div style="margin-bottom: 40px; background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #f0f0f0;">
-      <h2 style="margin: 0 0 16px 0; font-size: 1.1rem; font-weight: bold; color: #0f0f0f; display: flex; align-items: center; gap: 8px;">
+      <h2 style="margin: 0 0 16px 0; font-size: 1.1rem; font-weight: bold; color: #0f0f0f;">
         Продолжить просмотр
       </h2>
       
-      <!-- Горизонтальная карусель для экономии места на экране -->
+      <!-- Горизонтальная карусель истории (Адаптивная, скроллится пальцем/мышкой) -->
       <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
         <% @history_videos.each do |video| %>
-          <div style="flex: 0 0 240px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="flex: 0 0 220px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
             
             <!-- ПРЕВЬЮ ИСТОРИИ -->
-            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
+            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 8px;">
               <% if video.thumbnail_url.present? %>
                 <img src="<%= video.thumbnail_url %>" alt="" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
               <% else %>
@@ -36,19 +54,17 @@
               <% end %>
             </a>
 
-            <!-- ИНФОРМАЦИЯ ИСТОРИИ (С ДОБАВЛЕНИЕМ МИКРО-АВАТАРКИ) -->
+            <!-- ИНФОРМАЦИЯ ИСТОРИИ -->
             <div style="padding: 10px 8px 8px 8px;">
               <h3 style="margin: 0 0 6px 0; font-size: 0.85rem; line-height: 1.3; font-weight: bold; max-height: 2.6rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                 <a href="<%= watch_video_path(video) %>" style="text-decoration: none; color: #0f0f0f;"><%= video.title %></a>
               </h3>
               
-              <!-- Красивый горизонтальный ряд: кругляш аватарки + название канала -->
               <p style="margin: 0; font-size: 0.75rem; color: #ff0000; font-weight: bold; display: flex; align-items: center; gap: 6px; overflow: hidden;">
                 <% if video.channel.avatar_url.present? %>
                   <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; object-fit: cover;">
                 <% else %>
                   <span style="font-size: 0.75rem; flex-shrink: 0;">🔴</span>
-                </p>
                 <% end %>
                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                   <%= video.channel.title %>
@@ -62,7 +78,7 @@
     </div>
   <% end %>
 
-  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК (ТЕПЕРЬ СТИЛЬНЫЙ МИНИМАЛИЗМ БЕЗ ЭМОДЗИ) ================= -->
+  <!-- ================= БЛОК: ОБЩАЯ ЛЕНТА НОВИНОК ================= -->
   <div class="tabs-container" style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #e8e8e8; padding-bottom: 12px;">
     <a href="<%= root_path(tab: 'video') %>" 
        style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s;
@@ -86,14 +102,16 @@
     </a>
   </div>
 
-  <!-- Сетка для видео-карточек общей ленты (АДАПТИВНАЯ + С ЭФФЕКТОМ НАВЕДЕНИЯ) -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '180px' : '280px' %>, 1fr)); gap: 24px;">
+  <!-- ИСПРАВЛЕНО: Минимальная планка для видео/стримов снижена до 240px, чтобы они идеально укладывались на ноутбуках 1366 -->
+  <!-- ИДЕАЛЬНАЯ СИММЕТРИЯ: Карточки теперь плавно растягиваются, убирая пустоту справа на ноутах -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '150px' : '240px' %>, 1fr)); gap: 20px; width: 100%; box-sizing: border-box;">
+
     <% @videos.each do |video| %>
-      <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);" 
+      <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); width: 100%; box-sizing: border-box;" 
            onmouseover="this.style.transform='scale(1.01)'" 
            onmouseout="this.style.transform='scale(1)'">
         
-        <!-- Ссылка на video вокруг превью -->
+        <!-- Превью ролика -->
         <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
           <% if video.thumbnail_url.present? %>
             <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" 
@@ -102,7 +120,7 @@
             <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
           <% end %>
           
-          <!-- УМНАЯ ПЛАШКА ВРЕМЕНИ И АНОНСОВ ДЛЯ ГЛАВНОЙ С ЗАЩИТОЙ ОТ ПРИЗРАКОВ -->
+          <!-- Умная плашка анонсов -->
           <% is_fresh_announcement = video.published_at.present? && (video.published_at > 7.days.ago || video.published_at.to_time > Time.now) %>
           <% is_upcoming_announcement = (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.present? && video.published_at.to_time > Time.now) %>
           
@@ -115,58 +133,55 @@
               <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
             </div>
           <% end %>
+        </a>
 
-       <!-- Полоса прогресса на карточке общей ленты -->
+        <!-- Полоса прогресса -->
         <div style="width: 100%; height: 4px; background: #e0e0e0; position: relative; margin-top: -4px; z-index: 10;">
-          <div 
-            data-static-progress="<%= video.youtube_video_id %>"
-            style="width: <%= video.progress_percentage %>%; height: 100%; background: #ff0000; transition: width 0.3s;"
-          ></div>
+          <div data-static-progress="<%= video.youtube_video_id %>" style="width: <%= video.progress_percentage %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
         </div>
 
-        <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
-        <div style="padding: 14px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+        <!-- Описание и автор -->
+        <div style="padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
-            <h3 style="margin: 0 0 8px 0; font-size: 0.95rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600;">
+            <h3 style="margin: 0 0 8px 0; font-size: 0.9rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600;">
               <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; transition: color 0.2s;" onmouseover="this.style.color='#ff0000'" onmouseout="this.style.color='#0f0f0f'">
                 <%= video.title %>
               </a>
             </h3>
             
-            <p style="margin: 0 0 4px 0; font-size: 0.8rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+            <p style="margin: 0 0 4px 0; font-size: 0.8rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
               <% if video.channel.avatar_url.present? %>
-                <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; flex-shrink: 0; border-radius: 50%;">
+                <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 16px; height: 16px; flex-shrink: 0; border-radius: 50%; object-fit: cover;">
               <% else %>
-                <span style="font-size: 0.85rem;">🔴</span>
+                <span style="font-size: 0.8rem;">🔴</span>
               <% end %>
-              <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
+               <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                 <%= video.channel.title %>
               </a>
             </p>
           </div>
           
+          <!-- ДАТА ИЛИ СТАТУС АНОНСА -->
           <div style="margin-top: 8px; font-size: 0.75rem; color: #909090;">
             <% if video.published_at.present? %>
-              <% if (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.to_time > Time.now) %>
+              <% if is_upcoming_announcement %>
                 Опубликовано: Скоро (Анонс)
               <% else %>
                 Опубликовано: <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
               <% end %>
-            <% else %>
-              Опубликовано: Скоро (Анонс)
-            <% end %>
+              <% else %>
+                Опубликовано: Скоро (Анонс)
+              <% end %>
+            </div>
           </div>
+        </div>
+      <% end %>
+    </div>
 
-       </div>
-
-      </div>
-    <% end %>
-  </div>
-
-  <!-- ПАГИНАЦИЯ PAGY -->
-  <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
-    <%== @pagy.series_nav %>
-  </div>
+    <!-- ПАГИНАЦИЯ PAGY НА СВОЕМ ЗАКОННОМ МЕСТЕ -->
+    <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
+      <%== @pagy.series_nav %>
+    </div>
 
 </div>
-           
+             

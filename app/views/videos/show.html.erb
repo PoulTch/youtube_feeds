@@ -1,5 +1,6 @@
 <div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" class="video-main-layout">
 
+  <% content_for :title, "#{@video.title} — MyChannels" %>
   <!-- ВСТРОЕННЫЙ ПЛЕЕР YOUTUBE -->
   <div class="video-player">
     <iframe 
