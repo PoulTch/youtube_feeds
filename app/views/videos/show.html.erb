@@ -1,4 +1,22 @@
-<div data-controller="video-player" data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" data-video-player-video-id-value="<%= @video.id %>" class="video-main-layout">
+<!-- АДАПТИВНЫЙ УМНЫЙ КОНТЕЙНЕР ДЛЯ ПОЛНОГО СИНХРОНА ПЛЕЕРА НА ПК И НОУТБУКЕ -->
+<style>
+  .player-responsive-container {
+    max-width: 1200px; 
+    margin: 0; /* По умолчанию на ноутбуках и смартфонах аккуратно прижимаемся по сайдбару */
+    padding: 0 16px; 
+    box-sizing: border-box; 
+    width: 100%;
+  }
+
+  /* Как только экран становится больше 1400px (большой монитор ПК) — центрируем плеер! */
+  @media (min-width: 1400px) {
+    .player-responsive-container {
+      margin: 0 auto;
+    }
+  }
+</style>
+
+<div class="player-responsive-container">
 
   <% content_for :title, "#{@video.title} — MyChannels" %>
   <!-- ВСТРОЕННЫЙ ПЛЕЕР YOUTUBE -->
