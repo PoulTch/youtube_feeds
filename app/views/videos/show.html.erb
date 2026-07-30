@@ -170,15 +170,26 @@
       }
     }
 
-    // 3. УМНЫЙ АВТОПОВОРОТ НА ПОЛНЫЙ ЭКРАН ПРИ КЛИКЕ В ПЛЕЕРЕ
+    // 3. УМНЫЙ АВТОПОВОРОТ НА ПОЛНЫЙ ЭКРАН С УЧЕТОМ ТИПА РОЛИКА (SHORTS / VIDEO)
     document.addEventListener("fullscreenchange", function() {
+      const videoType = "<%= @video.video_type %>"; // Узнаем тип ролика напрямую из Rails!
+
       if (document.fullscreenElement) {
         if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock("landscape").catch(function(error) {
-            console.log("Поворот экрана заблокирован системой без тапа:", error);
-          });
+          if (videoType === 'shorts') {
+            // ЖЕСТКО БЛОКИРУЕМ ШОРТСЫ В ВЕРТИКАЛЬНОМ РЕЖИМЕ НА МОБИЛКЕ!
+            screen.orientation.lock("portrait").catch(function(error) {
+              console.log("Портретный поворот заблокирован системой:", error);
+            });
+          } else {
+            // Обычные видео и стримы крутим горизонтально, как и раньше
+            screen.orientation.lock("landscape").catch(function(error) {
+              console.log("Горизонтальный поворот заблокирован системой:", error);
+            });
+          }
         }
       } else {
+        // При выходе из полного экрана возвращаем свободу поворота
         if (screen.orientation && screen.orientation.unlock) {
           screen.orientation.unlock();
         }
