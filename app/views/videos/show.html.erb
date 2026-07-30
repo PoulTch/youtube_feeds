@@ -27,7 +27,7 @@
       width: 100%;
     }
 
-    /* УМНЫЙ КОНТЕЙНЕР ПЛЕЕРА */
+    /* УМНЫЙ КОНТЕЙНЕР ПЛЕЕРА + ЗАЩИТА АБСОЛЮТНОГО ПОЗИЦИОНИРОВАНИЯ */
     .video-player-wrapper {
       width: 100%;
       aspect-ratio: <%= @video.video_type == 'shorts' ? '9/16' : '16/9' %>; 
@@ -36,12 +36,18 @@
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
       flex-shrink: 0;
+      position: relative; /* КРИТИЧЕСКИ ВАЖНО: держит iframe внутри контейнера на ПК! */
     }
+    
+    /* ЖЕЛЕЗОБЕТОННОЕ ЦЕНТРИРОВАНИЕ IFRAME ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА */
     .video-player-wrapper iframe {
       width: 100%;
       height: 100%;
       border: none;
       display: block;
+      margin: auto;
+      position: absolute;
+      top: 0; bottom: 0; left: 0; right: 0;
     }
 
     /* ТЕКСТОВЫЙ БЛОК */
@@ -56,17 +62,17 @@
     @media (min-width: 768px) {
       <% if @video.video_type == 'shorts' %>
         .video-main-layout-box {
-          flex-direction: row !important; /* Разворачиваем в один ряд на ПК! */
+          flex-direction: row !important; 
           align-items: flex-start;
         }
         .video-player-wrapper {
           width: auto !important;
-          height: 75vh !important; /* Фиксированная высота шортса по экрану */
+          height: 75vh !important; 
           aspect-ratio: 9/16 !important;
         }
-        .video-info-block {
+        .shorts-info-column {
           flex-grow: 1;
-          padding-top: 10px;
+          padding-left: 10px;
         }
       <% end %>
     }
