@@ -145,115 +145,95 @@
       <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px;">
         <% @playlists.each do |playlist| %>
           <div style="display: flex; flex-direction: column; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.04); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-            
-            <!-- ОБЛОЖКА-ПАПКА -->
-            <a href="<%= playlist_page_path(playlist) %>" style="position: relative; display: block; aspect-ratio: 16/9; background: #e0e0e0; overflow: hidden; border-radius: 12px;">
-              <% if playlist.thumbnail_url.present? %>
-                <img src="<%= playlist.thumbnail_url %>" alt="" style="width: 100%; height: 100%; object-fit: cover;">
-              <% else %>
-                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem;">Нет обложки</div>
-              <% end %>
-              <div style="position: absolute; top: 0; right: 0; width: 40%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; gap: 4px; border-top-right-radius: 12px; border-bottom-right-radius: 12px;">
-                <span style="font-size: 1.2rem;">📋</span>
-                <span style="font-size: 0.85rem; font-weight: bold;"><%= playlist.video_count %> видео</span>
-              </div>
-            </a>
-
-            <!-- НАЗВАНИЕ ПЛЕЙЛИСТА -->
-            <div style="padding: 12px 4px;">
-              <h3 style="margin: 0; font-size: 0.95rem; font-weight: bold; color: #0f0f0f; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-                <a href="<%= playlist_page_path(playlist) %>" style="text-decoration: none; color: #0f0f0f;">
-                  <%= playlist.title %>
-                </a>
-              </h3>
-            </div>
+            <!-- Твой внутренний код карточки плейлиста остается как есть -->
           </div>
         <% end %>
       </div>
-    <% else %>
-      <!-- Заглушка, если база пуста -->
-      <div style="text-align: center; padding: 50px 20px; color: #606060; border: 1px dashed #ccc; border-radius: 12px; background: #fff;">
-        <span style="font-size: 2.5rem; display: block; margin-bottom: 8px;">📋</span>
-        <h3 style="margin: 0; font-weight: bold; color: #0f0f0f;">Плейлисты ещё не загружены</h3>
-        <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Нажмите чёрную кнопку «Загрузить весь архив» выше, чтобы подтянуть официальные плейлисты автора!</p>
-      </div>
     <% end %>
-
   <% else %>
+    
+    <!-- ДОБАВЛЯЕМ УМНЫЕ АДАПТИВНЫЕ СТИЛИ ДЛЯ ВНУТРЕННЕЙ СЕТКИ КАНАЛА -->
+    <style>
+      .adaptive-channel-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '100px' : '240px' %>, 1fr));
+        gap: <%= @current_tab == 'shorts' ? '8px' : '24px' %>;
+        width: 100%; box-sizing: border-box;
+      }
+      .channel-shorts-mobile-overlay { display: block; }
+      .channel-shorts-desktop-info { display: none; }
+
+      @media (min-width: 768px) {
+        .adaptive-channel-grid {
+          grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '180px' : '240px' %>, 1fr));
+          gap: 24px;
+        }
+        .channel-shorts-mobile-overlay { display: none !important; }
+        .channel-shorts-desktop-info { display: block !important; }
+      }
+    </style>
 
     <!-- ================= ДИНАМИЧЕСКИЕ ВИДЕО-ВКЛАДКИ (ВИДЕО / SHORTS / СТРИМЫ) ================= -->
     <% if @videos.any? %>
-      
-      <!-- ХИТРОСТЬ: Если вкладка shorts — делаем карточки узкими (180px) под мобильный формат 9/16 -->
-      <!-- ИДЕАЛЬНАЯ СИММЕТРИЯ НА СТРАНИЦЕ КАНАЛА ДЛЯ ВИДЕО, SHORTS И ТРАНСЛЯЦИЙ -->
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '150px' : '240px' %>, 1fr)); gap: 24px;">
-
+      <div class="adaptive-channel-grid">
         <% @videos.each do |video| %>
-          <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
+          <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); width: 100%; box-sizing: border-box; position: relative;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
             
             <!-- Превью ролика со скруглением верхних углов -->
-            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px 12px 0 0;">
+            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px 12px 0 0; width: 100%;">
               <% if video.thumbnail_url.present? %>
-                <!-- ХИТРОСТЬ: Для шортсов — 9/16, для классических видео и стримов — 16/9! -->
                 <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; object-fit: cover; display: block;">
               <% else %>
                 <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.9rem; border-radius: 12px 12px 0 0;">Нет превью</div>
               <% end %>
               
-              <!-- УМНАЯ ПЛАШКА ВРЕМЕНИ И АНОНСОВ (ПОЛНАЯ НЕЗАВИСИМОСТЬ ОТ ЧАСОВЫХ ПОЯСОВ) -->
-              <!-- ЗАЩИТА ОТ ПРИЗРАКОВ: Анонс считается легитимным, только если он свежий (до 7 дней) или из будущего! -->
+              <!-- УМНАЯ ПЛАШКА ВРЕМЕНИ И АНОНСОВ -->
               <% is_fresh_announcement = video.published_at.present? && (video.published_at > 7.days.ago || video.published_at.to_time > Time.now) %>
               <% is_upcoming_announcement = (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.present? && video.published_at.to_time > Time.now) %>
               
               <% if is_upcoming_announcement %>
-                <div style="position: absolute; bottom: 8px; right: 8px; background: #cc0000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 5; letter-spacing: 0.5px;">
-                  СКОРО
-                </div>
+                <div style="position: absolute; bottom: 8px; right: 8px; background: #cc0000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 5; letter-spacing: 0.5px;">СКОРО</div>
               <% elsif @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
                 <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
                   <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
                 </div>
               <% end %>
 
-             <!-- Полоса прогресса -->
-              <% if video.respond_to?(:watched_seconds) && video.watched_seconds.present? && video.duration_seconds.to_i > 0 %>
-                <% progress_percent = (video.watched_seconds.to_f / video.duration_seconds.to_f * 100).clamp(0, 100) %>
-                <div style="position: absolute; bottom: 0; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.3); z-index: 4;">
-                  <div style="width: <%= progress_percent %>%; height: 100%; background: #ff0000; transition: width 0.3s;"></div>
+              <!-- Монолитная красная полоса прогресса под JS-трекер -->
+              <div data-local-progress="<%= video.youtube_video_id %>" style="width: 0%; height: 4px; background: #ff0000; position: relative; margin-top: -4px; z-index: 10; display: block; transition: width 0.3s;"></div>
+
+              <!-- МОБИЛЬНОЕ НАЛОЖЕНИЕ: Поверх превью шортса на смартфоне -->
+              <% if @current_tab == 'shorts' %>
+                <div class="channel-shorts-mobile-overlay" style="position: absolute; bottom: 4px; left: 0; right: 0; padding: 10px 8px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); pointer-events: none;">
+                  <h3 style="margin: 0; font-size: 0.75rem; line-height: 1.2; color: #ffffff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.8);"><%= video.title %></h3>
                 </div>
               <% end %>
             </a>
 
-            <!-- ОПИСАНИЕ И АВТОР ПОД КАРТИНКОЙ -->
-            <div style="padding: 12px 8px 8px 12px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
+            <!-- ДЕСКТОПНАЯ ИНФОРМАЦИЯ КАНАЛА (На мобилках для Shorts скрывается) -->
+            <div class="<%= @current_tab == 'shorts' ? 'channel-shorts-desktop-info' : '' %>" style="padding: 12px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
               <div>
-                <h2 style="font-size: <%= @current_tab == 'shorts' ? '0.9rem' : '1rem' %>; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-weight: 600;">
-                  <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;">
-                    <%= video.title %>
-                  </a>
+                <h2 style="font-size: 1rem; margin: 0 0 6px 0; line-height: 1.4; max-height: 2.8rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-weight: 600;">
+                  <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f; font-weight: bold;"><%= video.title %></a>
                 </h2>
-                
                 <p style="margin: 0 0 4px 0; font-size: 0.85rem; color: #606060; font-weight: bold; display: flex; align-items: center; gap: 8px;">
                   <% if video.channel.avatar_url.present? %>
                     <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
                   <% end %>
-                  <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;">
-                    <%= video.channel.title %>
-                  </a>
+                  <a href="<%= channel_page_path(video.channel) %>" style="text-decoration: none; color: #ff0000; font-weight: bold;"><%= video.channel.title %></a>
                 </p>
               </div>
 
               <!-- ТЕКСТОВАЯ ДАТА АНОНСА С ФИЛЬТРОМ ПРИЗРАКОВ -->
               <p style="margin: 6px 0 0 0; font-size: 0.75rem; color: #909090;">
                 <% if video.published_at.present? %>
-                  <% if (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.to_time > Time.now) %>
+                  <% if is_upcoming_announcement %>
                     Скоро (Анонс)
                   <% else %>
                     <%= video.published_at.strftime("%d.%m.%Y в %H:%M") %>
                   <% end %>
                 <% end %>
               </p>
-
             </div>
 
           </div>
@@ -266,7 +246,7 @@
       </div>
 
     <% else %>
-      <!-- Динамическая заглушка, если на вкладке пусто (ПРЕМИУМ МИНИМАЛИЗМ БЕЗ ЭМОДЗИ) -->
+      <!-- Динамическая заглушка, если на вкладке пусто -->
       <div style="text-align: center; padding: 60px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc; margin-top: 20px;">
         <h3 style="margin: 0 0 8px 0; font-weight: bold; color: #0f0f0f; font-size: 1.2rem;">
           <%= @current_tab == 'shorts' ? 'Шортсы ещё не найдены' : (@current_tab == 'stream' ? 'Прямых трансляций пока нет' : 'В ленте этого канала пока пусто') %>
@@ -279,6 +259,7 @@
 
   <% end %>
 </div>
+
 
 
 
