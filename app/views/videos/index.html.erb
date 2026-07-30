@@ -1,11 +1,10 @@
-<!-- УМНЫЕ СТИЛИ: На ПК шортсы крупные с текстом снизу, на мобилках — компактные с текстом ПОВЕРХ! -->
+<!-- АДАПТИВНЫЙ УМНЫЙ КОНТЕЙНЕР ДЛЯ ПОЛНОГО СИНХРОНА ПК И НОУТБУКА -->
 <style>
   .main-responsive-container {
     max-width: 1200px; margin: 0; padding: 0 16px; box-sizing: border-box; width: 100%;
   }
   @media (min-width: 1400px) { .main-responsive-container { margin: 0 auto; } }
 
-  /* СЕТКА РОЛИКОВ: По умолчанию (мобилки) шортсы 3 колонки, видео — 1-2 колонки */
   .adaptive-video-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '100px' : '240px' %>, 1fr));
@@ -13,11 +12,9 @@
     width: 100%; box-sizing: border-box;
   }
 
-  /* Для Shorts на мобилках прячем стандартный блок и показываем мобильное наложение */
   .shorts-mobile-overlay { display: block; }
   .shorts-desktop-info { display: none; }
 
-  /* --- НАСТРОЙКИ ДЛЯ КОМПЬЮТЕРОВ И НОУТБУКОВ (от 768px и шире) --- */
   @media (min-width: 768px) {
     .adaptive-video-grid {
       grid-template-columns: repeat(auto-fill, minmax(<%= @current_tab == 'shorts' ? '180px' : '240px' %>, 1fr));
@@ -78,9 +75,21 @@
             <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
           <% end %>
 
-          <!-- МОБИЛЬНОЕ НАЛОЖЕНИЕ ДЛЯ SHORTS (Видно только на мобилках) -->
+          <!-- ПЛАШКИ СВЕРХУ КАРТИНКИ (z-index: 15 гарантирует видимость!) -->
+          <% is_fresh_announcement = video.published_at.present? && (video.published_at > 7.days.ago || video.published_at.to_time > Time.now) %>
+          <% is_upcoming_announcement = (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.present? && video.published_at.to_time > Time.now) %>
+          
+          <% if is_upcoming_announcement %>
+            <div style="position: absolute; bottom: 8px; right: 8px; background: #cc0000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 15; letter-spacing: 0.5px;">СКОРО</div>
+          <% elsif @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
+            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 15;">
+              <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
+            </div>
+          <% end %>
+
+          <!-- МОБИЛЬНОЕ НАЛОЖЕНИЕ ДЛЯ SHORTS -->
           <% if @current_tab == 'shorts' %>
-            <div class="shorts-mobile-overlay" style="position: absolute; bottom: 4px; left: 0; right: 0; padding: 10px 8px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); pointer-events: none;">
+            <div class="shorts-mobile-overlay" style="position: absolute; bottom: 4px; left: 0; right: 0; padding: 10px 8px; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0) 100%); pointer-events: none; z-index: 12;">
               <h3 style="margin: 0 0 2px 0; font-size: 0.75rem; line-height: 1.2; color: #ffffff; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
                 <span style="pointer-events: auto; color: #ffffff;"><%= video.title %></span>
               </h3>
@@ -91,8 +100,8 @@
 
         <div data-local-progress="<%= video.youtube_video_id %>" style="width: 0%; height: 4px; background: #ff0000; position: relative; margin-top: -4px; z-index: 10; display: block; transition: width 0.3s;"></div>
 
-        <!-- ДЕСКТОПНЫЙ БЛОК ИНФЫ: На мобилках для Shorts скрывается, для видео виден всегда! -->
-        <div class="<%= @current_tab == 'shorts' ? 'shorts-desktop-info' : '' %>" style="padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+        <!-- ДЕСКТОПНЫЙ БЛОК ИНФЫ -->
+        <div class="<%= @current_tab == 'shorts' ? 'shorts-desktop-info' : '' %>" style="padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; z-index: 5;">
           <div>
             <h3 style="margin: 0 0 8px 0; font-size: 0.9rem; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-weight: 600;">
               <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="text-decoration: none; color: #0f0f0f;"><%= video.title %></a>
@@ -111,6 +120,9 @@
     <% end %>
   </div>
 
-  <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;"><%== @pagy.series_nav %></div>
+  <!-- ПАГИНАЦИЯ PAGY НА СВОЕМ ЗАКОННОМ МЕСТЕ -->
+  <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
+    <%== @pagy.series_nav %>
+  </div>
 
 </div>
