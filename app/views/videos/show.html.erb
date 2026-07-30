@@ -27,7 +27,7 @@
       width: 100%;
     }
 
-    /* УМНЫЙ КОНТЕЙНЕР ПЛЕЕРА + ЗАЩИТА АБСОЛЮТНОГО ПОЗИЦИОНИРОВАНИЯ */
+    /* УМНЫЙ КОНТЕЙНЕР ПЛЕЕРА + ФЛЕКС-ЦЕНТРИРОВАНИЕ ДЛЯ ANDROID */
     .video-player-wrapper {
       width: 100%;
       aspect-ratio: <%= @video.video_type == 'shorts' ? '9/16' : '16/9' %>; 
@@ -36,18 +36,23 @@
       overflow: hidden;
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
       flex-shrink: 0;
-      position: relative; /* КРИТИЧЕСКИ ВАЖНО: держит iframe внутри контейнера на ПК! */
+      position: relative;
+      
+      /* ВНЕДРЕНО: Превращаем контейнер во флекс-бокс, который намертво центрирует всё внутри */
+      display: flex;
+      align-items: center;     /* Центрирование по вертикали (убьет пустоту на Realme!) */
+      justify-content: center; /* Центрирование по горизонтали */
     }
     
-    /* ЖЕЛЕЗОБЕТОННОЕ ЦЕНТРИРОВАНИЕ IFRAME ДЛЯ ПОЛНОЭКРАННОГО РЕЖИМА */
+    /* ЖЕЛЕЗОБЕТОННОЕ ВЫРАВНИВАНИЕ IFRAME ДЛЯ ВСЕХ МОБИЛОК */
     .video-player-wrapper iframe {
       width: 100%;
       height: 100%;
       border: none;
       display: block;
-      margin: auto;
-      position: absolute;
-      top: 0; bottom: 0; left: 0; right: 0;
+      
+      /* Для Realme убираем абсолютный сдвиг, флекс-бокс выше сделает всё сам плавно и ровно */
+      margin: 0;
     }
 
     /* ТЕКСТОВЫЙ БЛОК */
