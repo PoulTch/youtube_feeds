@@ -25,16 +25,16 @@
       
       <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
         <% @history_videos.each do |video| %>
-          <!-- ДОБАВИЛИ КЛАСС history-card-item: Теперь JS найдет эту карточку без ошибок! -->
           <div class="history-card-item" style="flex: 0 0 240px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
             
+            <!-- ПРЕВЬЮ ИСТОРИИ (СТАБИЛЬНОЕ И РЕАКТИВНО БЫСТРОЕ) -->
             <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
               <% if video.thumbnail_url.present? %>
                 <img src="<%= video.thumbnail_url %>" alt="" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
               <% else %>
                 <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.8rem;">Нет превью</div>
               <% end %>
-              
+
               <% if video.respond_to?(:duration_seconds) && video.duration_seconds.to_i > 0 %>
                 <div style="position: absolute; bottom: 6px; right: 6px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 2px 4px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; font-family: monospace; z-index: 5;">
                   <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
@@ -45,7 +45,6 @@
               <div data-local-progress="<%= video.youtube_video_id %>"
                   style="width: 0%; height: 4px; background: #ff0000; position: relative; margin-top: -4px; z-index: 10; display: block; transition: width 0.3s;">
               </div>
-
             </a>
 
             <div style="padding: 10px 8px 8px 8px;">
@@ -79,27 +78,30 @@
     <% @videos.each do |video| %>
       <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); width: 100%; box-sizing: border-box;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
         
+        <!-- ПРЕВЬЮ ОБЩЕЙ ЛЕНТЫ (СТАБИЛЬНОЕ И РЕАКТИВНО БЫСТРОЕ, С УМНЫМ ФОРМАТОМ ДЛЯ SHORTS) -->
         <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
           <% if video.thumbnail_url.present? %>
-            <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; object-fit: cover; display: block;">
+            <!-- ИСПРАВЛЕНО: Выводим родную чистую ссылку из базы, так как шортсы там уже в качестве hqdefault! -->
+            <img src="<%= video.thumbnail_url %>" alt="<%= video.title %>" 
+                 style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; object-fit: cover; display: block;">
           <% else %>
             <div style="width: 100%; aspect-ratio: <%= @current_tab == 'shorts' ? '9/16' : '16/9' %>; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888;">Нет превью</div>
           <% end %>
-          
+
           <% is_fresh_announcement = video.published_at.present? && (video.published_at > 7.days.ago || video.published_at.to_time > Time.now) %>
           <% is_upcoming_announcement = (video.respond_to?(:video_type) && video.video_type == 'stream' && (video.duration_seconds.to_i == 0 || video.views_count.nil?) && is_fresh_announcement) || (video.published_at.present? && video.published_at.to_time > Time.now) %>
           
           <% if is_upcoming_announcement %>
             <div style="position: absolute; bottom: 8px; right: 8px; background: #cc0000; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; z-index: 5; letter-spacing: 0.5px;">СКОРО</div>
           <% elsif @current_tab != 'shorts' && video.respond_to?(:duration_seconds) && video.duration_seconds.present? && video.duration_seconds > 0 %>
-            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;"><%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %></div>
+            <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; font-family: monospace; z-index: 5;">
+              <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
+            </div>
           <% end %>
         </a>
 
-        <!-- Полоса прогресса на карточке общей ленты (МОНОЛИТНАЯ КРАСНАЯ) -->
-        <div data-local-progress="<%= video.youtube_video_id %>"
-             style="width: 0%; height: 4px; background: #ff0000; position: relative; margin-top: -4px; z-index: 10; display: block; transition: width 0.3s;">
-        </div>
+        <!-- Монолитная красная полоса прогресса общей ленты -->
+        <div data-local-progress="<%= video.youtube_video_id %>" style="width: 0%; height: 4px; background: #ff0000; position: relative; margin-top: -4px; z-index: 10; display: block; transition: width 0.3s;"></div>
 
         <div style="padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
           <div>
@@ -124,6 +126,10 @@
     <% end %>
   </div>
 
-  <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;"><%== @pagy.series_nav %></div>
+  <!-- ПАГИНАЦИЯ PAGY -->
+  <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center;">
+    <%== @pagy.series_nav %>
+  </div>
 
 </div>
+

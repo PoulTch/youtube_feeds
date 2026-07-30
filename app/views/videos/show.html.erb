@@ -1,6 +1,5 @@
 <% content_for :title, "#{@video.title} — MyChannels" %>
 
-<!-- АДАПТИВНЫЙ УМНЫЙ КОНТЕЙНЕР ПЛЕЕРА + ВОЗВРАЩЕННЫЙ ТРЕКЕР ДЛЯ НАКАТЫВАНИЯ ПРОГРЕССА -->
 <div class="player-responsive-container" 
      data-controller="video-player" 
      data-video-player-youtube-id-value="<%= @video.youtube_video_id %>" 
@@ -8,21 +7,33 @@
 
   <style>
     .player-responsive-container {
-      max-width: 1200px; 
-      margin: 0; 
+      max-width: <%= @video.video_type == 'shorts' ? '450px' : '1200px' %>; /* Шортсы на ПК зажимаем в аккуратную вертикальную колонку */
+      margin: 0 auto; 
       padding: 0 16px; 
       box-sizing: border-box; 
       width: 100%;
     }
-    @media (min-width: 1400px) {
-      .player-responsive-container {
-        margin: 0 auto;
-      }
+    
+    /* УМНЫЙ КОНТЕЙНЕР ПЛЕЕРА */
+    .video-player-wrapper {
+      width: 100%;
+      /* Если это шортс — включаем вертикальный формат 9/16, иначе стандартный 16/9 */
+      aspect-ratio: <%= @video.video_type == 'shorts' ? '9/16' : '16/9' %>; 
+      background: #000;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    .video-player-wrapper iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
     }
   </style>
 
-  <!-- ВСТРОЕННЫЙ ПЛЕЕР YOUTUBE -->
-  <div class="video-player">
+  <!-- ВСТРОЕННЫЙ УМНЫЙ ПЛЕЕР YOUTUBE -->
+  <div class="video-player-wrapper">
     <iframe 
       id="youtube-player"
       src="https://youtube.com<%= @video.youtube_video_id %>?autoplay=1&rel=0&enablejsapi=1&playsinline=1" 
