@@ -140,18 +140,50 @@
 <div style="max-width: 1200px; margin: 0 auto; padding: 0 16px;">
   
   <% if @current_tab == 'playlists' %>
-    <!-- ================= ВКЛАДКА ПЛЕЙЛИСТОВ ================= -->
+    <!-- ================= ВКЛАДКА ПЛЕЙЛИСТОВ (ПОЛНОСТЬЮ ВОССТАНОВЛЕНА!) ================= -->
     <% if @playlists.any? %>
-      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; width: 100%; box-sizing: border-box;">
         <% @playlists.each do |playlist| %>
-          <div style="display: flex; flex-direction: column; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.04); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-            <!-- Твой внутренний код карточки плейлиста остается как есть -->
+          <div style="display: flex; flex-direction: column; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.04); transition: transform 0.2s; position: relative;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            
+            <!-- ПРЕВЬЮ ПЛЕЙЛИСТА С ПЛАШКОЙ СБОКУ (УСТАНОВЛЕН ТОЧНЫЙ РОУТ!) -->
+            <a href="<%= playlist_page_path(playlist) %>" style="display: block; position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden; background: #e0e0e0;">
+              <% if playlist.thumbnail_url.present? %>
+                <img src="<%= playlist.thumbnail_url %>" alt="" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+              <% else %>
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #888;">Нет видео</div>
+              <% end %>
+              
+              <!-- Накладываемая правая плашка количества видео, как на YouTube -->
+              <div style="position: absolute; top: 0; right: 0; bottom: 0; width: 35%; background: rgba(0, 0, 0, 0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffffff; z-index: 5;">
+                <span style="font-weight: bold; font-size: 1.2rem;"><%= playlist.videos.count %></span>
+                <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px;">видео</span>
+              </div>
+            </a>
+
+            <!-- ИНФОРМАЦИЯ О ПЛЕЙЛИСТЕ -->
+            <div style="padding: 14px 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+              <h3 style="margin: 0 0 6px 0; font-size: 0.95rem; font-weight: bold; line-height: 1.4; color: #0f0f0f; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                <!-- УСТАНОВЛЕН ТОЧНЫЙ РОУТ ЗДЕСЬ -->
+                <a href="<%= playlist_page_path(playlist) %>" style="text-decoration: none; color: #0f0f0f;"><%= playlist.title %></a>
+              </h3>
+              <p style="margin: 0; font-size: 0.75rem; color: #909090; font-weight: 500;">
+                Обновлен: <%= playlist.updated_at.strftime("%d.%m.%Y") %>
+              </p>
+            </div>
+
           </div>
+
         <% end %>
+      </div>
+    <% else %>
+      <!-- Заглушка, если плейлистов нет -->
+      <div style="text-align: center; padding: 50px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc;">
+        <h3 style="margin: 0; font-weight: bold; color: #0f0f0f; font-size: 1.1rem;">Плейлисты на этом канале не найдены</h3>
       </div>
     <% end %>
   <% else %>
-    
+
     <!-- ДОБАВЛЯЕМ УМНЫЕ АДАПТИВНЫЕ СТИЛИ ДЛЯ ВНУТРЕННЕЙ СЕТКИ КАНАЛА -->
     <style>
       .adaptive-channel-grid {
