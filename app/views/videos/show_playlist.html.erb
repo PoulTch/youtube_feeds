@@ -48,7 +48,7 @@
         <% end %>
 
       <% else %>
-        <!-- Если плейлист девственно пуст — горит полноценная черная ракета запуска -->
+        <!-- Если плейлист девственно пуст — кнопка синхронизации с YouTube API -->
         <%= button_to sync_playlist_videos_path(@playlist),
                       method: :post,
                       local: true,
@@ -57,7 +57,7 @@
                       style: "background: #0f0f0f; color: #ffffff; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); transition: background 0.2s;",
                       onmouseover: "this.style.background='#333333'",
                       onmouseout: "this.style.background='#0f0f0f'" do %>
-          Синхронизировать с YouTube API
+          Загрузить плейлист
         <% end %>
       <% end %>
     </div>
