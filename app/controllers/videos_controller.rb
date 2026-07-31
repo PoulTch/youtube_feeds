@@ -2,13 +2,21 @@ class VideosController < ApplicationController
   # Отключаем проверку токена для сохранения секунд, так как запросы идут фоном через JS
   skip_before_action :verify_authenticity_token, only: [ :save_progress ]
 
-  # 1. Главная страница со всеми видео + ИЗОЛИРОВАННАЯ ИСТОРИЯ ПРОСМОТРОВ + ОБЩИЕ ВКЛАДКИ
+  # 1. Главная страница со всеми видео + ИЗОЛИРОВАННАЯ ИСТОРИЯ ПРОСМОТРОВ
   def index
-    # Берем видео с просмотрами и фильтруем через Ruby
-    @history_videos = Video.includes(:channel)
-                           .where("watched_seconds > 0")
-                           .order(updated_at: :desc)
-                           .select { |v| v.duration_seconds && v.watched_seconds && (v.duration_seconds - v.watched_seconds) > 10 }
+    # Вытаскиваем ролики с прогрессом в массив БЕЗ предварительного лимита базы
+    all_history = Video.includes(:channel)
+                        .where("watched_seconds > 0")
+                        .order(updated_at: :desc)
+                        .to_a
+
+    # Сначала выкидываем из массива полностью досмотренные ролики (остаток < 15 сек)
+    filtered_history = all_history.select do |v|
+      v.duration_seconds && v.watched_seconds && (v.duration_seconds - v.watched_seconds) > 15
+    end
+
+    # И ТОЛЬКО ТЕПЕРЬ жестко берём первые 15 самых свежих недосмотренных карточек!
+    @history_videos = filtered_history.first(15)
 
     # Ловим текущую общую вкладку (по умолчанию 'video')
     @current_tab = params[:tab] || "video"
@@ -135,7 +143,7 @@ class VideosController < ApplicationController
         channel.fetch_playlist_cards_from_api
 
         # ОЧИЩАЕМ КЭШ САЙДБАРА: Заставляем Rails мгновенно перерисовать меню слева!
-        Rails.cache.delete([current_user, "sidebar_channels"])        
+        Rails.cache.delete([ current_user, "sidebar_channels" ])
 
         flash[:notice] = "Канал '#{channel.title}' успешно добавлен! Все тайминги, плейлисты и оформление загружены мгновенно."
         redirect_to channel_page_path(channel), data: { turbo: false } and return
@@ -285,7 +293,7 @@ class VideosController < ApplicationController
     @channel.destroy # Теперь благодаря :delete_all в модели это сработает мгновенно!
 
     # ИСПРАВЛЕНО: Теперь ключ кэша строго совпадает с методом добавления!
-    Rails.cache.delete([current_user, "sidebar_channels"])
+    Rails.cache.delete([ current_user, "sidebar_channels" ])
 
     flash[:notice] = "Канал «#{@channel.title}» и все его видео успешно удалены."
     redirect_to root_path
@@ -548,10 +556,10 @@ class VideosController < ApplicationController
   # МЕТОД ДЛЯ РУЧНОГО ОБНОВЛЕНИЯ АВАТАРОК, БАННЕРОВ, ПОДПИСЧИКОВ, СЧЕТЧИКОВ ПРОСМОТРОВ И ЛАЙКОВ
   def refresh_metadata
     @channel = Channel.find(params[:id])
-    
+
     # 1. Сначала обновляем общие данные самого автора через Google API
     if @channel.fetch_avatar_from_api
-      
+
       # 2. Вытаскиваем хэш-карту: ключ - оригинальный YouTube ID, значение - системный id строки в базе
       video_map = @channel.videos.pluck(:youtube_video_id, :id).to_h
       video_ids = video_map.keys.compact
@@ -571,7 +579,7 @@ class VideosController < ApplicationController
                   v_id = item["id"]
                   views = item.dig("statistics", "viewCount")
                   likes = item.dig("statistics", "likeCount")
-                  
+
                   # НАДЕЖНЫЙ ПОИСК: Находим точный системный ID строки из нашей хэш-карты
                   db_id = video_map[v_id]
                   if db_id
@@ -591,12 +599,12 @@ class VideosController < ApplicationController
       end
 
       # Очищаем кэш сайдбара
-      Rails.cache.delete([current_user, "sidebar_channels"])
+      Rails.cache.delete([ current_user, "sidebar_channels" ])
       flash[:notice] = "Данные канала «#{@channel.title}» успешно актуализированы: точные подписчики, баннер, а также просмотры и лайки всех роликов обновлены."
     else
       flash[:alert] = "Не удалось обновить данные. Проверьте лимиты YouTube API."
     end
-    
+
     redirect_to channel_page_path(@channel, tab: params[:tab]), data: { turbo: false }
   end
 end
