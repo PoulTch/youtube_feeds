@@ -2,9 +2,11 @@ require "net/http"
 require "rexml/document"
 
 class Channel < ApplicationRecord
-  has_many :videos, dependent: :delete_all
-  # ДОБАВЛЕНО: Связь с нашей новой таблицей плейлистов
-  has_many :playlists, dependent: :delete_all
+    # 1. СНАЧАЛА удаляем плейлисты. Но используем :destroy, чтобы сработали правила внутри самой модели Playlist!
+    has_many :playlists, dependent: :destroy
+
+    # 2. И только ПОСЛЕ этого очищаем видеоролики канала одной быстрой SQL-командой
+    has_many :videos, dependent: :delete_all
 
   # Метод для создания/обновления канала по его ID
   def self.create_by_id(youtube_id)
