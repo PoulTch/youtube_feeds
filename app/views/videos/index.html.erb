@@ -32,27 +32,44 @@
     <div style="margin-bottom: 40px; background: #ffffff; padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #f0f0f0;">
       <h2 style="margin: 0 0 16px 0; font-size: 1.1rem; font-weight: bold; color: #0f0f0f;">Продолжить просмотр</h2>
       <div style="display: flex; gap: 20px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+        
         <% @history_videos.each do |video| %>
           <div class="history-card-item" style="flex: 0 0 240px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden;">
+            
+            <!-- ССЫЛКА С ПЛАШКОЙ ВРЕМЕНИ И ТВОИМ ЛОКАЛЬНЫМ ПРОГРЕССОМ СТРОГО ВНУТРИ ЦИКЛА -->
+            <a href="<%= watch_video_path(video) %>" title="<%= video.title %>" style="position: relative; display: block; overflow: hidden; border-radius: 12px;">
               <% if video.thumbnail_url.present? %>
                 <img src="<%= video.thumbnail_url %>" alt="" style="width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block;">
               <% else %>
                 <div style="width: 100%; aspect-ratio: 16/9; background: #e0e0e0; display: flex; align-items: center; justify-content: center; color: #888; font-size: 0.8rem;">Нет превью</div>
               <% end %>
+
+              <!-- ЧЕРНАЯ ПЛАШКА ВРЕМЕНИ ИЗ БАЗЫ ДАННЫХ -->
+              <% if video.duration_seconds.to_i > 0 %>
+                <div style="position: absolute; bottom: 8px; right: 8px; background: rgba(0, 0, 0, 0.8); color: #fff; padding: 3px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; font-family: monospace; z-index: 5;">
+                  <%= Time.at(video.duration_seconds).utc.strftime(video.duration_seconds >= 3600 ? "%H:%M:%S" : "%M:%S") %>
+                </div>
+              <% end %>
+
+              <!-- ТВОЙ КЛАССИЧЕСКИЙ ПРОГРЕСС-БАР ИЗ LOCALSTORAGE -->
               <div data-local-progress="<%= video.youtube_video_id %>" style="width: 0%; height: 4px; background: #ff0000; position: relative; margin-top: -4px; z-index: 10; display: block; transition: width 0.3s;"></div>
             </a>
+
             <div style="padding: 10px 8px 8px 8px;">
               <h3 style="margin: 0 0 6px 0; font-size: 0.85rem; line-height: 1.3; font-weight: bold; max-height: 2.6rem; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
                 <a href="<%= watch_video_path(video) %>" style="text-decoration: none; color: #0f0f0f;"><%= video.title %></a>
               </h3>
               <p style="margin: 0; font-size: 0.75rem; color: #ff0000; font-weight: bold; display: flex; align-items: center; gap: 6px; overflow: hidden;">
-                <% if video.channel.avatar_url.present? %><img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; object-fit: cover;"><% end %>
+                <% if video.channel.avatar_url.present? %>
+                  <img src="<%= video.channel.avatar_url %>" alt="" class="micro-avatar" style="width: 14px; height: 14px; flex-shrink: 0; border-radius: 50%; object-fit: cover;">
+                <% end %>
                 <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><%= video.channel.title %></span>
               </p>
             </div>
+
           </div>
         <% end %>
+
       </div>
     </div>
   <% end %>
