@@ -458,7 +458,7 @@ class VideosController < ApplicationController
     playlist = Playlist.find(params[:id])
 
     # Запускаем фонового робота через Solid Queue
-    FetchPlaylistVideosJob.perform_later(playlist.id)
+    FetchPlaylistVideosJob.perform_now(playlist.id)
 
     # Возвращаем пользователя на страницу просмотра плейлиста с уведомлением
     flash[:notice] = "Автопилот синхронизации плейлиста «#{playlist.title}» успешно запущен в фоне! Данные, лайки и описания подгрузятся через несколько секунд."

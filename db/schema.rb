@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_07_29_182329) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_03_080403) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -186,7 +186,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_07_29_182329) do
     t.integer "views_count"
     t.integer "likes_count"
     t.index ["channel_id"], name: "index_videos_on_channel_id"
+    t.index ["duration_seconds"], name: "index_videos_on_duration_seconds"
     t.index ["playlist_id"], name: "index_videos_on_playlist_id"
+    t.index ["views_count"], name: "index_videos_on_views_count"
+    t.index ["youtube_video_id"], name: "index_videos_on_youtube_video_id"
   end
 
   add_foreign_key "playlists", "channels"
