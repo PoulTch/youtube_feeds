@@ -276,6 +276,9 @@ class VideosController < ApplicationController
           end
         end
 
+        # ЖЕЛЕЗОБЕТОННОЕ ИСПРАВЛЕНИЕ: Сжигаем кэш сайдбара по твоему фирменному ключу!
+        Rails.cache.delete([ current_user, "sidebar_channels" ])
+
         flash[:notice] = "Импорт завершен успешно! Добавлено каналов: #{imported_count}"
       rescue => e
         flash[:alert] = "Ошибка при чтении CSV: #{e.message}"
@@ -299,158 +302,151 @@ class VideosController < ApplicationController
     redirect_to root_path
   end
 
-  # 8. БРОНЕБОЙНЫЙ ДВУХСТВОЛЬНЫЙ ИМПОРТ (РАЗДЕЛЯЕМ ВКЛАДКИ ВИДЕО И СТРИМОВ НА 100%)
+  # 8. Метод для тотального скачивания архива роликов канала через YouTube API
   def fetch_channel_archive
     channel = Channel.find(params[:id])
     new_video_ids = []
 
-    # ТРЁХСТВОЛЬНЫЙ КАНАН YOUTUBE: Сканируем каждую официальную вкладку отдельно со 100% точностью!
-    base_url = "https://www.youtube.com/channel/#{channel.youtube_channel_id}"
-    urls_to_scan = [
-      { url: "#{base_url}/videos", default_type: "video" },   # Вкладка обычных видео
-      { url: "#{base_url}/streams", default_type: "stream" }, # Вкладка официальных трансляций
-      { url: "#{base_url}/shorts", default_type: "shorts" }   # Вкладка ОФИЦИАЛЬНЫХ SHORTS!
-    ]
+    uploads_playlist_id = channel.youtube_channel_id.dup
+    if uploads_playlist_id.start_with?("UC")
+      # Превращаем вторую букву C в U
+      uploads_playlist_id[1] = "U"
+    end
 
-    # Проверяем, есть ли на машине Windows-путь к PowerShell (домашний ПК с WSL)
-    is_wsl = File.exist?("/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe")
-    powershell_path = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
-    ytdlp_path = "C:\\Windows\\System32\\yt-dlp.exe"
+    api_key = Rails.application.config.youtube_api_key
+    if api_key.blank?
+      flash[:alert] = "Ключ YouTube API не настроен!"
+      redirect_to channel_page_path(channel) and return
+    end
 
-    urls_to_scan.each do |target|
-      # Для каждой вкладки просим у yt-dlp до 250 свежих роликов, чтобы не перегружать сервер
-      if is_wsl
-        cmd = "#{powershell_path} -Command \"& '#{ytdlp_path}' --flat-playlist --playlist-end 250 --dump-json '#{target[:url]}'\""
-      else
-        cmd = "yt-dlp --flat-playlist --playlist-end 250 --dump-json '#{target[:url]}'"
-      end
+    next_page_token = nil
+    page_counter = 0
 
-      begin
-        IO.popen(cmd) do |io|
-          io.each_line do |line|
-            clean_line = line.encode("UTF-8", invalid: :replace, undef: :replace, replace: "").strip
-            next unless clean_line.start_with?("{")
+    puts "========================================================="
+    puts "--> [ОТЛАДКА API] СТАРТ. Канал: #{channel.title}"
+    puts "--> [ОТЛАДКА API] Итоговый плейлист загрузок: #{uploads_playlist_id}"
+    puts "========================================================="
 
-            begin
-              video_data = JSON.parse(clean_line)
-              video_id = video_data["id"]
-              video_title = video_data["title"]
+    begin
+      loop do
+        page_counter += 1
+        token_param = next_page_token.present? ? "&pageToken=#{next_page_token}" : ""
+        url = "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=50&playlistId=#{uploads_playlist_id}&key=#{api_key}#{token_param}"
 
-              if video_id.present?
-                web_url = video_data["webpage_url"].to_s
-                orig_url = video_data["original_url"].to_s
+        response = Channel.fetch_with_redirects(url)
 
-                # ИДЕАЛЬНОЕ РАСПРЕДЕЛЕНИЕ: Сортируем строго по паспорту вкладки, откуда скачали!
-                if target[:default_type] == "shorts" || web_url.include?("/shorts/") || orig_url.include?("/shorts/")
-                  detected_type = "shorts"
-                elsif target[:default_type] == "stream" || web_url.include?("/live/") || orig_url.include?("/live/")
-                  detected_type = "stream"
-                else
-                  detected_type = "video"
-                end
+        if response.nil?
+          puts "--> [ОТЛАДКА API] Страница #{page_counter}: Ответ равен nil!"
+          break
+        end
 
-                video = channel.videos.find_or_initialize_by(youtube_video_id: video_id)
-                new_video_ids << video_id
+        unless response.is_a?(Net::HTTPSuccess)
+          puts "--> [ОТЛАДКА API] Страница #{page_counter}: Сервер вернул ошибку #{response.code}"
+          break
+        end
 
-                video.title = video_title if video.title.blank?
-                video.video_type = detected_type # Пишем честный сорт в базу данных
-                video.published_at ||= Time.current
+        data = JSON.parse(response.body)
+        items_size = data["items"] ? data["items"].size : 0
+        puts "--> [ОТЛАДКА API] Страница #{page_counter}: Успешно получено элементов: #{items_size}"
 
-                if video_data["thumbnails"].present? && video_data["thumbnails"].is_a?(Array)
-                  video.thumbnail_url = video_data["thumbnails"].last["url"]
-                end
-                video.save!(validate: false)
+        if items_size == 0
+          puts "--> [ОТЛАДКА API] Страница #{page_counter}: Элементов больше нет, выходим."
+          break
+        end
+
+        ActiveRecord::Base.transaction do
+          data["items"].each do |item|
+            v_id = item.dig("contentDetails", "videoId")
+            snippet = item["snippet"]
+
+            if v_id.present? && snippet
+              video = Video.find_or_initialize_by(youtube_video_id: v_id)
+              new_video_ids << v_id
+
+              video.channel_id = channel.id
+              video.title = snippet["title"] if video.title.blank?
+              video.published_at = snippet["publishedAt"] if snippet["publishedAt"].present?
+              video.video_type = "video"
+
+              if snippet["thumbnails"].present?
+                thumb_data = snippet["thumbnails"]["maxres"] || snippet["thumbnails"]["high"] || snippet["thumbnails"]["medium"] || snippet["thumbnails"]["default"]
+                video.thumbnail_url = thumb_data["url"] if thumb_data
               end
-            rescue => e
+
+              video.save!(validate: false)
             end
           end
         end
-      rescue => e
-        # Если у автора вообще нет вкладки /streams, yt-dlp просто молча пропустит этот шаг
+
+        next_page_token = data["nextPageToken"]
+        puts "--> [ОТЛАДКА API] Страница #{page_counter}: Следующий токен: #{next_page_token.inspect}"
+
+        if next_page_token.blank?
+          puts "--> [ОТЛАДКА API] Токен пустой. Плейлист полностью прочитан."
+          break
+        end
       end
+    rescue => e
+      puts "--> [ОТЛАДКА API КРИТИЧЕСКАЯ ОШИБКА] Упал цикл: #{e.message}"
     end
 
-    # ПАКЕТНАЯ СИНХРОНИЗАЦИЯ ПРОСМОТРОВ И ЛАЙКОВ С GOOGLE API v3 (БЫСТРАЯ)
-    api_key = Rails.application.config.youtube_api_key
-    if api_key.present?
-      historic_blank_ids = channel.videos.where(duration_seconds: [ nil, 0 ]).or(channel.videos.where(views_count: nil)).pluck(:youtube_video_id)
-      total_ids_to_sync = (new_video_ids + historic_blank_ids).uniq.compact
+    puts "========================================================="
+    puts "--> [ОТЛАДКА API] Финал структуры. Всего собрано ID: #{new_video_ids.uniq.size}"
+    puts "========================================================="
 
-      if total_ids_to_sync.any?
-        total_ids_to_sync.each_slice(50) do |slice|
-          ids_string = slice.join(",")
-          api_url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,snippet,statistics&id=#{ids_string}&key=#{api_key}"
+    # Шаг 2: Внутреннее обогащение статистики пачками по 50
+    if new_video_ids.any?
+      new_video_ids.uniq.compact.each_slice(50) do |slice|
+        api_url = "https://www.googleapis.com/youtube/v3/videos?id=#{slice.join(",")}&key=#{api_key}&part=snippet,contentDetails,statistics"
+        res = Channel.fetch_with_redirects(api_url)
 
-          response = Channel.fetch_with_redirects(api_url)
-          if response && response.is_a?(Net::HTTPSuccess)
-            api_data = JSON.parse(response.body)
-            if api_data["items"].present?
-              api_data["items"].each do |item|
-                v_id = item["id"]
-                snippet = item["snippet"]
-                content_details = item["contentDetails"]
-                statistics = item["statistics"]
+        if res && res.is_a?(Net::HTTPSuccess)
+          api_data = JSON.parse(res.body)
+          if api_data["items"].present?
+            ActiveRecord::Base.transaction do
+              api_data["items"].each do |v_item|
+                db_v = Video.find_by(youtube_video_id: v_item["id"])
+                if db_v
+                  snippet = v_item["snippet"]
+                  content_details = v_item["contentDetails"]
+                  statistics = v_item["statistics"]
 
-                db_video = channel.videos.find_by(youtube_video_id: v_id)
-                if db_video && snippet
-                  db_video.title = snippet["title"] if snippet["title"].present?
-                  db_video.published_at = snippet["publishedAt"]
-                  db_video.description = snippet["description"] if snippet["description"].present?
+                  db_v.title = snippet["title"] if snippet && snippet["title"].present?
+                  db_v.description = snippet["description"] if snippet && snippet["description"].present?
+
+                  if snippet && snippet["description"].to_s.include?("#shorts")
+                    db_v.video_type = "shorts"
+                  end
 
                   if statistics
-                    db_video.views_count = statistics["viewCount"].to_i if statistics["viewCount"].present?
-                    db_video.likes_count = statistics["likeCount"].to_i if statistics["likeCount"].present?
+                    db_v.views_count = statistics["viewCount"].to_i
+                    db_v.likes_count = statistics["likeCount"].to_i
                   end
 
                   if content_details && content_details["duration"].present?
                     begin
-                      db_video.duration_seconds = ActiveSupport::Duration.parse(content_details["duration"]).to_i
+                      iso_dur = content_details["duration"]
+                      secs = ActiveSupport::Duration.parse(iso_dur).to_i
+                      db_v.duration_seconds = secs
+
+                      db_v.video_type = "shorts" if secs > 0 && secs <= 60
+                      db_v.video_type = "stream" if content_details["liveBroadcastContent"] == "live" || content_details["liveBroadcastContent"] == "completed"
                     rescue
-                      db_video.duration_seconds = 0
+                      db_v.duration_seconds = 0
                     end
                   end
-                  db_video.save!(validate: false)
+                  db_v.save!(validate: false)
                 end
               end
             end
           end
         end
-      end
-
-      # ИМПОРТ КАРТИН ПЛЕЙЛИСТОВ
-      playlists_url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=#{channel.youtube_channel_id}&maxResults=50&key=#{api_key}"
-      begin
-        playlists_response = Channel.fetch_with_redirects(playlists_url)
-        if playlists_response && playlists_response.is_a?(Net::HTTPSuccess)
-          playlists_data = JSON.parse(playlists_response.body)
-          if playlists_data["items"].present?
-            playlists_data["items"].each do |item|
-              p_id = item["id"]
-              snippet = item["snippet"]
-              content_details = item["contentDetails"]
-
-              if p_id.present? && snippet
-                playlist = channel.playlists.find_or_initialize_by(youtube_playlist_id: p_id)
-                playlist.title = snippet["title"]
-                if snippet["thumbnails"].present?
-                  thumb_data = snippet["thumbnails"]["maxres"] || snippet["thumbnails"]["high"] || snippet["thumbnails"]["medium"] || snippet["thumbnails"]["default"]
-                  playlist.thumbnail_url = thumb_data["url"] if thumb_data
-                end
-                playlist.video_count = content_details["itemCount"].to_i if content_details && content_details["itemCount"].present?
-                playlist.save!(validate: false)
-              end
-            end
-          end
-        end
-      rescue => e
       end
     end
 
-    channel.fetch_avatar_from_api
-    channel.fetch_playlist_cards_from_api
-
-    flash[:notice] = "Архив успешно обновлен! Видео и официальные Стримы разделены по вкладкам со 100% точностью."
-    redirect_to channel_page_path(channel) and return
+    Rails.cache.delete([ current_user, "sidebar_channels" ])
+    flash[:notice] = "Тотальный импорт UU-архива завершен! Скачано роликов: #{channel.videos.count}"
+    redirect_to channel_page_path(channel)
   end
 
   # СИНХРОНИЗАЦИЯ РОЛИКОВ ПЛЕЙЛИСТА ЧЕРЕЗ ФОНОВЫЙ АВТОПИЛОТ SOLID QUEUE
