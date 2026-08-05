@@ -394,10 +394,11 @@ class VideosController < ApplicationController
     puts "--> [ОТЛАДКА API] Финал структуры. Всего собрано ID: #{new_video_ids.uniq.size}"
     puts "========================================================="
 
-    # Шаг 2: Внутреннее обогащение статистики пачками по 50
+    # Шаг 2: Внутреннее обогащение статистики пачками по 50 (ИСПРАВЛЕННОЕ РАСКИДЫВАНИЕ)
     if new_video_ids.any?
       new_video_ids.uniq.compact.each_slice(50) do |slice|
-        api_url = "https://www.googleapis.com/youtube/v3/videos?id=#{slice.join(",")}&key=#{api_key}&part=snippet,contentDetails,statistics"
+        # Железно запрашиваем все четыре части у Google API
+        api_url = "https://www.googleapis.com/youtube/v3/videos?part=contentDetails,liveStreamingDetails,snippet,statistics&id=#{slice.join(',')}&key=#{api_key}"
         res = Channel.fetch_with_redirects(api_url)
 
         if res && res.is_a?(Net::HTTPSuccess)
@@ -405,36 +406,47 @@ class VideosController < ApplicationController
           if api_data["items"].present?
             ActiveRecord::Base.transaction do
               api_data["items"].each do |v_item|
-                db_v = Video.find_by(youtube_video_id: v_item["id"])
+                db_v = channel.videos.find_by(youtube_video_id: v_item["id"])
                 if db_v
                   snippet = v_item["snippet"]
                   content_details = v_item["contentDetails"]
                   statistics = v_item["statistics"]
+                  live_details = v_item["liveStreamingDetails"]
 
                   db_v.title = snippet["title"] if snippet && snippet["title"].present?
                   db_v.description = snippet["description"] if snippet && snippet["description"].present?
-
-                  if snippet && snippet["description"].to_s.include?("#shorts")
-                    db_v.video_type = "shorts"
-                  end
 
                   if statistics
                     db_v.views_count = statistics["viewCount"].to_i
                     db_v.likes_count = statistics["likeCount"].to_i
                   end
 
+                  # Распарсиваем длительность ролика в секунды
+                  secs = 0
                   if content_details && content_details["duration"].present?
                     begin
                       iso_dur = content_details["duration"]
                       secs = ActiveSupport::Duration.parse(iso_dur).to_i
                       db_v.duration_seconds = secs
-
-                      db_v.video_type = "shorts" if secs > 0 && secs <= 60
-                      db_v.video_type = "stream" if content_details["liveBroadcastContent"] == "live" || content_details["liveBroadcastContent"] == "completed"
                     rescue
                       db_v.duration_seconds = 0
                     end
                   end
+
+                  # === СВЕРХТОЧНОЕ РАСКИДЫВАНИЕ ПО ВКЛАДКАМ ===
+                  description_text = snippet ? snippet["description"].to_s.downcase : ""
+
+                  if live_details.present?
+                    # Контур А: Если у видео физически есть блок liveStreamingDetails — это 100% СТРИМ!
+                    db_v.video_type = "stream"
+                  elsif description_text.include?("#shorts") || (secs > 0 && secs <= 180)
+                    # Контур Б: Если есть тег или длительность до 3 минут (180 сек) — это ШОРТС!
+                    db_v.video_type = "shorts"
+                  else
+                    # Контур В: Во всех остальных случаях — это обычное классическое ВИДЕО
+                    db_v.video_type = "video"
+                  end
+
                   db_v.save!(validate: false)
                 end
               end
@@ -445,7 +457,7 @@ class VideosController < ApplicationController
     end
 
     Rails.cache.delete([ current_user, "sidebar_channels" ])
-    flash[:notice] = "Тотальный импорт UU-архива завершен! Скачано роликов: #{channel.videos.count}"
+    flash[:notice] = "Тотальный импорт UU-архива завершен! Ролики успешно распределены по вкладкам."
     redirect_to channel_page_path(channel)
   end
 
