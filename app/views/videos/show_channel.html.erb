@@ -167,8 +167,22 @@
                 <!-- УСТАНОВЛЕН ТОЧНЫЙ РОУТ ЗДЕСЬ -->
                 <a href="<%= playlist_page_path(playlist) %>" style="text-decoration: none; color: #0f0f0f;"><%= playlist.title %></a>
               </h3>
+
+              <!-- ИНФОРМАЦИЯ О ПЛЕЙЛИСТЕ (БЕЗОПАСНЫЙ UX-ВАРИАНТ С ПЕРЕХОДОМ!) -->
               <p style="margin: 0; font-size: 0.75rem; color: #909090; font-weight: 500;">
-                Обновлен: <%= playlist.updated_at.strftime("%d.%m.%Y") %>
+                <% last_video = playlist.videos.order(published_at: :desc).first %>
+                
+                <% if last_video && last_video.published_at.present? %>
+                  <!-- СЦЕНАРИЙ 1: Плейлист уже рабочий — выводим дату самого свежего видео -->
+                  Обновлен: <%= last_video.published_at.strftime("%d.%m.%Y") %>
+                <% else %>
+                  <!-- СЦЕНАРИЙ 2: Плейлист пустой — зовём зайти внутрь и активировать его! -->
+                  <%= link_to playlist_page_path(playlist), 
+                              data: { turbo: false },
+                              style: "color: #065fd4; text-decoration: none; font-weight: bold;" do %>
+                    Открыть и загрузить плейлист
+                  <% end %>
+                <% end %>
               </p>
             </div>
 
@@ -176,6 +190,14 @@
 
         <% end %>
       </div>
+
+      <!-- МГНОВЕННЫЙ ВЫВОД КНОПОК ПАГИНАЦИИ В СТИЛЕ YOUTUBE -->
+      <% if @pagy.present? && @current_tab == 'playlists' %>
+        <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center; width: 100%;">
+          <%== @pagy.series_nav %>
+        </div>
+      <% end %>
+
     <% else %>
       <!-- Заглушка, если плейлистов нет -->
       <div style="text-align: center; padding: 50px 20px; color: #606060; background: #ffffff; border-radius: 12px; border: 1px dashed #ccc;">

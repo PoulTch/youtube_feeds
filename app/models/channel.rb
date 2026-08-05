@@ -141,19 +141,30 @@ class Channel < ApplicationRecord
     false
   end
 
-  # СВЕРХЭКОНОМНЫЙ АВТОМАТИЧЕСКИЙ СБОР КАРТОЧЕК ПЛЕЙЛИСТОВ (БЕЗ СКАЧИВАНИЯ САМИХ РОЛИКОВ)
+  # СВЕРХЭКОНОМНЫЙ АВТОМАТИЧЕСКИЙ СБОР КАРТОЧЕК ПЛЕЙЛИСТОВ (НА ВСЮ ГЛУБИНУ АРХИВА)
   def fetch_playlist_cards_from_api
     api_key = Rails.application.config.youtube_api_key
     return if api_key.blank? || youtube_channel_id.blank?
 
-    playlists_url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=#{youtube_channel_id}&maxResults=50&key=#{api_key}"
+    next_page_token = nil
+    page_counter = 0
+
+    puts "=== [СУПЕР-ПЛЕЙЛИСТЫ] Начинаю тотальный сбор папок для канала: #{self.title} ==="
 
     begin
-      # Пользуемся твоим методом с пробитием редиректов Гугла!
-      response = Channel.fetch_with_redirects(playlists_url)
-      if response && response.is_a?(Net::HTTPSuccess)
+      # ВХОДИМ В БЕСКОНЕЧНЫЙ ЦИКЛ ПОСТРАНИЧНОГО СКАНИРОВАНИЯ GOOGLE API
+      loop do
+        page_counter += 1
+        token_param = next_page_token.present? ? "&pageToken=#{next_page_token}" : ""
+        playlists_url = "https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=#{youtube_channel_id}&maxResults=50&key=#{api_key}#{token_param}"
+
+        response = Channel.fetch_with_redirects(playlists_url)
+        break unless response && response.is_a?(Net::HTTPSuccess)
+
         playlists_data = JSON.parse(response.body)
-        if playlists_data["items"].present?
+        break if playlists_data["items"].blank?
+
+        ActiveRecord::Base.transaction do
           playlists_data["items"].each do |item|
             p_id = item["id"]
             snippet = item["snippet"]
@@ -175,9 +186,17 @@ class Channel < ApplicationRecord
               playlist.save!(validate: false)
             end
           end
-          puts "--> [API GOOGLE] Успешно подтянуты карточки плейлистов для канала: #{self.title}"
         end
+
+        puts "--> [API GOOGLE] Прочитана страница плейлистов №#{page_counter}. Ищем следующую..."
+
+        # Вытаскиваем токен следующей страницы
+        next_page_token = playlists_data["nextPageToken"]
+        # Если страниц больше нет — выходим из цикла!
+        break if next_page_token.blank?
       end
+
+      puts "--> [API GOOGLE] Тотальный сбор завершен! Всего папок в базе для «#{self.title}»: #{playlists.count}"
     rescue => e
       Rails.logger.error "Ошибка автоматического сбора карточек плейлистов: #{e.message}"
     end

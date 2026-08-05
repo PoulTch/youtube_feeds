@@ -157,7 +157,7 @@ class VideosController < ApplicationController
     redirect_to root_path, data: { turbo: false }
   end
 
-  # 3. Страница конкретного одного канала (УМНЫЕ ВКЛАДКИ + САТЕЛЛИТНАЯ ПОДСТРАХОВКА)
+  # 3. Страница конкретного одного канала (УМНЫЕ ВКЛАДКИ + ПАГИНАЦИЯ ДЛЯ ВСЕХ ВКЛАДОК)
   def show_channel
     @channel = Channel.find_by(id: params[:id])
 
@@ -170,39 +170,45 @@ class VideosController < ApplicationController
     @current_tab = params[:tab] || "video"
     @current_sort = params[:sort] || "desc"
 
-    # Вытягиваем карточки плейлистов для вкладки плейлистов
-    @playlists = @channel.playlists.order(title: :asc)
+    # Гарантируем сброс на 1 страницу, если параметр пуст (вынесли наверх для всеобщего удобства)
+    current_page = params[:page].to_i > 0 ? params[:page].to_i : 1
 
-    if @current_tab != "playlists"
+    if @current_tab == "playlists"
+      # === СЦЕНАРИЙ А: ВКЛАДКА ПЛЕЙЛИСТОВ (ТЕПЕРЬ СО СВЕРХСКОРОСТНОЙ ПАГИНАЦИЕЙ!) ===
+      playlists_relation = @channel.playlists.order(id: :asc)
+      
+      # Разбиваем плейлисты на легкие страницы по 16 штук, чтобы страница открывалась мгновенно
+      @pagy, @playlists = pagy(:offset, playlists_relation, page: current_page, limit: 24)
+      @videos = [] # Пустая заглушка, так как ролики на этой вкладке не нужны
+    else
+      # === СЦЕНАРИЙ Б: ВКЛАДКИ ВИДЕО, ШОРТСОВ ИЛИ СТРИМОВ ===
       # Направление дат
       order_logic = if @current_sort == "asc"
                       { published_at: :asc, id: :asc }
-      else
+                    else
                       { published_at: :desc, id: :desc }
-      end
+                    end
 
       # Базовая связь строго этого автора
       base_relation = @channel.videos.order(order_logic)
 
       # УМНОЕ РАСПРЕДЕЛЕНИЕ: пускаем nil на главную вкладку 'video'
       videos_relation = case @current_tab
-      when "shorts"
+                        when "shorts"
                           base_relation.where(video_type: "shorts")
-      when "stream"
+                        when "stream"
                           base_relation.where(video_type: "stream")
-      else
-                          # Явно разрешаем PostgreSQL выгружать и 'video', и любые nil от свежего RSS!
+                        else
                           base_relation.where("video_type = 'video' OR video_type IS NULL")
-      end
+                        end
 
-      # Гарантируем сброс на 1 страницу, если параметр пуст
-      current_page = params[:page].to_i > 0 ? params[:page].to_i : 1
+      # Подгружаем карточки плейлистов для сайдбара в легком режиме (без пагинации, просто массив)
+      @playlists = @channel.playlists.order(id: :asc)
 
-      # МАГИЯ PAGY: разбиваем отсортированный массив на страницы
+      # МАГИЯ PAGY: разбиваем ролики на страницы по 24 штуки
       @pagy, @videos = pagy(:offset, videos_relation, page: current_page, limit: 24)
     end
   end
-
 
   # Экшен для показа роликов внутри конкретного плейлиста в MyChannels (С ПОДДЕРЖКОЙ СОРТИРОВКИ)
   def show_playlist
