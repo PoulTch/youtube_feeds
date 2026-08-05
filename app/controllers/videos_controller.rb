@@ -465,9 +465,11 @@ class VideosController < ApplicationController
   def clear_playlist_videos
     playlist = Playlist.find(params[:id])
 
-    # ПРОФЕССИОНАЛЬНЫЙ ХОД: Отвязываем видео от плейлиста, но не ломаем вкладку канала!
+    # Теперь, когда джоба плейлистов не создает дубликатов строк,
+    # эта команда просто отвяжет видео от плейлиста, не удаляя его из архива канала!
     playlist.videos.update_all(playlist_id: nil)
 
+    Rails.cache.delete([ current_user, "sidebar_channels" ])
     flash[:notice] = "Память сервера очищена! Все видеоролики из плейлиста «#{playlist.title}» удалены."
     redirect_to playlist_page_path(playlist)
   end

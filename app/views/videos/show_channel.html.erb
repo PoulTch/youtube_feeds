@@ -54,12 +54,12 @@
                     method: :post, 
                     local: true,
                     data: { turbo: false },
-                    form: { onsubmit: "return confirm('Полный архив этого канала уже сохранен локально. Вы действительно хотите запустить повторную глубокую перепроверку всех вкладок через yt-dlp?');" },
+                    form: { onsubmit: "return confirm('Полный архив этого канала уже сохранен локально. Вы действительно хотите запустить повторную глубокую перепроверку всех роликов через официальный YouTube API?');" },
                     style: "background: #f2f2f2; color: #0f0f0f; border: 1px solid #ccc; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s, transform 0.1s;",
                     onmouseover: "this.style.background='#e6e6e6'; this.style.transform='scale(1.02)'",
                     onmouseout: "this.style.background='#f2f2f2'; this.style.transform='scale(1)'",
                     onmousedown: "this.style.transform='scale(0.98)'" do %>
-        Перепроверить весь архив через yt-dlp
+        Перепроверить весь архив через YouTube API
       <% end %>
     <% else %>
       <!-- If the channel is fresh and only has 15 basic RSS feeds, display the black rocket action button -->
@@ -67,12 +67,12 @@
                     method: :post, 
                     local: true,
                     data: { turbo: false },
-                    form: { onsubmit: "return confirm('Вы уверены, что хотите запустить глубокое сканирование полного архива канала? Это скачает все видео, трансляции и шортсы автора.');" },
+                    form: { onsubmit: "return confirm('Вы уверены, что хотите запустить глубокое сканирование полного архива канала? Это скачает все видео, трансляции и шортсы автора через официальный YouTube API.');" },
                     style: "background: #0f0f0f; color: #ffffff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: bold; cursor: pointer; font-size: 0.95rem; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: background 0.2s, transform 0.1s;",
                     onmouseover: "this.style.background='#333333'; this.style.transform='scale(1.02)'",
                     onmouseout: "this.style.background='#0f0f0f'; this.style.transform='scale(1)'",
                     onmousedown: "this.style.transform='scale(0.98)'" do %>
-        Загрузить весь архив видео через yt-dlp
+        Загрузить весь архив видео через YouTube API
       <% end %>
     <% end %>
 

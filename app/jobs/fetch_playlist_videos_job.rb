@@ -30,17 +30,26 @@ class FetchPlaylistVideosJob < ApplicationJob
           snippet = item["snippet"]
 
           if v_id.present? && snippet
-            video = channel.videos.find_or_initialize_by(youtube_video_id: v_id)
-            video.title = snippet["title"]
-            video.published_at = snippet["publishedAt"]
+            # 1. ГЛОБАЛЬНЫЙ ПОИСК РОЛИКА: Ищем строго по youtube_video_id по всей базе
+            video = Video.find_or_initialize_by(youtube_video_id: v_id)
+
+            # 2. Привязываем к автору, только если он еще не привязан
+            video.channel_id = channel.id if video.channel_id.blank?
+
+            # 3. Заполняем текстовые поля, только если они пустые (чтобы не затирать архив)
+            video.title = snippet["title"] if video.title.blank?
+            video.published_at = snippet["publishedAt"] if video.published_at.blank?
             video.video_type = "video"
+
+            # 4. Мягко привязываем к плейлисту
             video.playlist_id = playlist.id
 
-            if snippet["thumbnails"].present?
+            if snippet["thumbnails"].present? && video.thumbnail_url.blank?
               thumb_data = snippet["thumbnails"]["maxres"] || snippet["thumbnails"]["high"] || snippet["thumbnails"]["medium"] || snippet["thumbnails"]["default"]
               video.thumbnail_url = thumb_data["url"] if thumb_data
             end
 
+            # Сохраняем без валидации
             video.save!(validate: false)
             new_video_ids << v_id
           end
