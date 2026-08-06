@@ -16,7 +16,7 @@
     <div style="flex: 1; min-width: 300px;">
     <h1 style="margin: 0 0 4px 0; font-size: 2rem; font-weight: bold; color: #0f0f0f;">Сборник: <%= @playlist.title %></h1>
     <p style="margin: 0 0 16px 0; color: #606060; font-size: 0.95rem;">
-      Автор: <strong style="color: #ff0000;"><%= @channel.title %></strong> • Всего видео на YouTube: <strong><%= @playlist.video_count || 0 %></strong> • В локальной базе: <strong><%= @videos.size %></strong>
+      Автор: <strong style="color: #ff0000;"><%= @channel.title %></strong> • Всего видео на YouTube: <strong><%= @playlist.video_count || 0 %></strong> • В локальной базе: <strong><%= @playlist.videos.size %></strong>
     </p>
 
     <!-- ПАНЕЛЬ КНОПОК УПРАВЛЕНИЯ ПЛЕЙЛИСТОМ (УМНАЯ + С ПОДТВЕРЖДЕНИЕМ) -->
@@ -150,6 +150,14 @@
         </div>
       <% end %>
     </div>
+
+    <!-- МГНОВЕННЫЙ ВЫВОД КНОПОК ПАГИНАЦИИ В СТИЛЕ YOUTUBE ДЛЯ РОЛИКОВ ПЛЕЙЛИСТА -->
+    <% if @pagy.present? %>
+      <div class="youtube-pagination" style="margin-top: 40px; margin-bottom: 60px; display: flex; justify-content: center; width: 100%;">
+        <%== @pagy.series_nav %>
+      </div>
+    <% end %>
+
   <% else %>
     <!-- ДИНАМИЧЕСКАЯ ЗАГЛУШКА С ОБНОВЛЕННЫМ СТИЛЕМ БЕЗ МУСОРА И ЯЩИКОВ -->
     <div style="text-align: center; padding: 60px 20px; color: #606060; background: #f9f9f9; border-radius: 12px; border: 2px dashed #e5e5e5;">

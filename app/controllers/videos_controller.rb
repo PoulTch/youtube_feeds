@@ -177,7 +177,7 @@ class VideosController < ApplicationController
       # === СЦЕНАРИЙ А: ВКЛАДКА ПЛЕЙЛИСТОВ (ТЕПЕРЬ СО СВЕРХСКОРОСТНОЙ ПАГИНАЦИЕЙ!) ===
       playlists_relation = @channel.playlists.order(id: :asc)
       
-      # Разбиваем плейлисты на легкие страницы по 16 штук, чтобы страница открывалась мгновенно
+      # Разбиваем плейлисты на легкие страницы по 24 штуки, чтобы страница открывалась мгновенно
       @pagy, @playlists = pagy(:offset, playlists_relation, page: current_page, limit: 24)
       @videos = [] # Пустая заглушка, так как ролики на этой вкладке не нужны
     else
@@ -210,7 +210,7 @@ class VideosController < ApplicationController
     end
   end
 
-  # Экшен для показа роликов внутри конкретного плейлиста в MyChannels (С ПОДДЕРЖКОЙ СОРТИРОВКИ)
+  # Экшен для показа роликов внутри конкретного плейлиста в MyChannels (С ПОДДЕРЖКОЙ СОРТИРОВКИ И ПАГИНАЦИИ)
   def show_playlist
     @playlist = Playlist.find(params[:id])
     @channel = @playlist.channel
@@ -218,15 +218,19 @@ class VideosController < ApplicationController
     # Запоминаем текущую сортировку внутри плейлиста (по умолчанию — "desc", Новые сверху)
     @current_sort = params[:sort] || "desc"
 
-    if @current_sort == "asc"
-      # Старые: выстраиваем ролики папки от 1-го выпуска к свежим
-      @videos = @playlist.videos.order(published_at: :asc, id: :asc)
-    else
-      # Новые: от свежих выпусков к старым
-      @videos = @playlist.videos.order(published_at: :desc, id: :desc)
-    end
-  end
+    # 1. Задаем базовую выборку роликов с сортировкой
+    playlist_videos_relation = if @current_sort == "asc"
+                                 @playlist.videos.order(published_at: :asc, id: :asc)
+                               else
+                                 @playlist.videos.order(published_at: :desc, id: :desc)
+                               end
 
+    # 2. Определяем текущую страницу
+    current_page = params[:page].to_i > 0 ? params[:page].to_i : 1
+
+    # 3. МАГИЯ PAGY: Разбиваем ролики плейлиста на легкие страницы по 24 штуки!
+    @pagy, @videos = pagy(:offset, playlist_videos_relation, page: current_page, limit: 24)
+  end
 
   # 4. Новый метод для страницы просмотра видео (ИСПРАВЛЕНО: Защита от nil-ошибок 500)
   def show
