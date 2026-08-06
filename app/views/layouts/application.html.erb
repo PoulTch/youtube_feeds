@@ -14,6 +14,21 @@
   </head>
   <body data-controller="sidebar">
 
+    <!-- ПОЛНОЭКРАННАЯ ЗАВЕСА СИНХРОНИЗАЦИИ СИСТЕМЫ -->
+    <div id="system-loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; transition: opacity 0.3s ease;">
+      <!-- Стильный минималистичный спиннер а-ля YouTube -->
+      <div style="width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #0f0f0f; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px;"></div>
+      <h2 style="margin: 0 0 8px 0; font-size: 1.2rem; font-weight: bold; color: #0f0f0f;">Импорт подписок и синхронизация архивов...</h2>
+      <p style="margin: 0; font-size: 0.9rem; color: #606060;">Пожалуйста, не закрывайте вкладку. Система выстраивает идеальную хронологию.</p>
+    </div>
+
+    <style>
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
+
     <!-- НОВАЯ МОБИЛЬНАЯ ШАПКА: Держит кнопку ☰ и логотип в одной строке -->
     <div class="mobile-header">
       <button class="sidebar-toggle" data-action="click->sidebar#toggle" aria-label="Открыть меню">☰</button>
@@ -154,17 +169,23 @@
           <%= f.submit "Добавить автора в ленту" %>
         <% end %>
 
-        <!-- БЛОК МАССОВОГО ИМПОРТА -->
+        <!-- БЛОК МАССОВОГО ИМПОРТА (СОХРАНЯЕМ ТВОЙ КРУТОЙ ДИЗАЙН И СТИЛИ) -->
         <div class="import-section">
           <span class="import-title">Массовый импорт из YouTube (subscriptions.csv):</span>
+          
           <%= form_with url: import_subscriptions_path, method: :post, local: true, multipart: true, data: { turbo: false } do |f| %>
             <label class="file-label">
               📁 Выбрать файл подписок и загрузить
-              <%= f.file_field :subscriptions_file, accept: ".csv", style: "display: none;", onchange: "this.form.submit();" %>
+              
+              <% # ЖЕЛЕЗОБЕТОННЫЙ UX: Сначала мгновенно тушим модалку, разворачиваем блур и отправляем форму %>
+              <%= f.file_field :subscriptions_file, 
+                               accept: ".csv", 
+                               style: "display: none;", 
+                               onchange: "document.getElementById('settings-dialog').close(); document.getElementById('system-loading-overlay').style.display = 'flex'; this.form.submit();" %>
             </label>
           <% end %>
-        </div>     
-        
+        </div>
+
       </div> <!-- Конец обертки modal-inner-content -->
     </dialog>
 
@@ -179,6 +200,61 @@
         }
       }
     </script>
+    <!-- Умный скрипт для управления состоянием загрузки системы и флеш-сообщениями -->
+    <script>
+      function handleSystemLoadingState() {
+        const overlay = document.getElementById('system-loading-overlay');
+        const flashNotice = document.querySelector('.flash-message');
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // 1. ПЕРВЫЙ ЭТАП: Сервер вернул нас на главную, горит флеш-плашка, но кэш еще не пробит
+        if (flashNotice && flashNotice.innerText.includes('импортированы')) {
+          if (!urlParams.has('refreshed')) {
+            console.log("--> [UX МОНСТР] Обнаружен импорт. Держим блур и жестко выжигаем кэш Оперы...");
+            
+            // Намертво принудительно держим оверлей включенным, чтобы под ним ничего не мелькало!
+            if (overlay) overlay.style.display = 'flex';
+
+            // Делаем один чистый, жесткий рефреш всей страницы с cache-buster параметром
+            const separator = window.location.href.includes('?') ? '&' : '?';
+            window.location.href = window.location.href + separator + 'refreshed=true&t=' + Date.now();
+            return;
+          }
+        }
+
+        // 2. ВТОРОЙ ЭТАП: Страница перезагрузилась с честным refreshed=true от сервера
+        if (urlParams.has('refreshed') && overlay) {
+          console.log("--> [UX МОНСТР] Чистая хронология получена. Плавно снимаем завесу.");
+          
+          // Оверлей висит еще полсекунды, чтобы все картинки и ролики успели встать по местам
+          setTimeout(() => {
+            overlay.style.opacity = '0';
+            setTimeout(() => { 
+              overlay.style.display = 'none'; 
+              
+              // Чистим адресную строку от технических хвостиков, чтобы интерфейс был стерилен
+              const cleanUrl = window.location.href.replace(/[?&]refreshed=true/, '').replace(/[?&]t=\d+/, '');
+              window.history.replaceState({}, document.title, cleanUrl);
+            }, 300);
+          }, 500);
+        }
+      }
+
+      document.addEventListener("turbo:load", function() {
+        handleSystemLoadingState();
+
+        // Твой стандартный таймер скрытия флеш-сообщений
+        const messages = document.querySelectorAll('.flash-message');
+        messages.forEach(function(msg) {
+          setTimeout(function() {
+            msg.style.opacity = '0';
+            setTimeout(function() { msg.remove(); }, 500);
+          }, 5000);
+        });
+      });
+    </script>
+
   </body>
 </html>
+
 

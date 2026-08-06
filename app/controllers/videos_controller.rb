@@ -281,7 +281,7 @@ class VideosController < ApplicationController
             if channel.save
               imported_count += 1
               # Выкачиваем видеоролики
-              FetchChannelVideosJob.perform_later(channel.id)
+              FetchChannelVideosJob.perform_now(channel.id)
             end
           end
         end
@@ -289,7 +289,8 @@ class VideosController < ApplicationController
         # ЖЕЛЕЗОБЕТОННОЕ ИСПРАВЛЕНИЕ: Сжигаем кэш сайдбара по твоему фирменному ключу!
         Rails.cache.delete([ current_user, "sidebar_channels" ])
 
-        flash[:notice] = "Импорт завершен успешно! Добавлено каналов: #{imported_count}"
+        # ОБНОВЛЕННЫЙ ТЕКСТ: Дает подсказку пользователю и триггерит наш JavaScript-полинг!
+        flash[:notice] = "Подписки успешно импортированы! Добавлено каналов: #{imported_count}. Лента новинок сейчас обновится автоматически, или нажмите F5."
       rescue => e
         flash[:alert] = "Ошибка при чтении CSV: #{e.message}"
       end

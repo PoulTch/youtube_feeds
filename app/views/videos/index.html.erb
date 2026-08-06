@@ -81,7 +81,8 @@
     <a href="<%= root_path(tab: 'stream') %>" style="text-decoration: none; padding: 8px 18px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; transition: all 0.2s; background: <%= @current_tab == 'stream' ? '#0f0f0f' : '#f2f2f2' %>; color: <%= @current_tab == 'stream' ? '#ffffff' : '#0f0f0f' %>;">Трансляции</a>
   </div>
 
-  <div class="adaptive-video-grid">
+  <!-- ДОБАВИЛИ id="main-video-grid" ДЛЯ УМНОГО АВТООБНОВЛЕНИЯ -->
+  <div id="main-video-grid" class="adaptive-video-grid">
     <% @videos.each do |video| %>
       <div style="background: #ffffff; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); width: 100%; box-sizing: border-box; position: relative;" onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
         
