@@ -10,13 +10,18 @@ class FetchChannelVideosJob < ApplicationJob
 
     # 2. АВТОПИЛОТ РЕАЛЬНЫХ ДАТ И ВРЕМЕНИ ЧЕРЕЗ GOOGLE API v3 (ИСПРАВЛЕННЫЙ)
     api_key = Rails.application.config.youtube_api_key
-    # ДОБАВИЛИ .to_a в конце, чтобы зафиксировать массив из 500 роликов в памяти компьютера
-    # ТОТАЛЬНЫЙ СКАНЕР ПЕРФЕКЦИОНИСТА:
-    # БЫСТРЫЙ УМНЫЙ АВТОПИЛОТ: Обновляем только ролики без статистики ИЛИ те, что не обновлялись больше 24 часов
-    videos_to_update = channel.videos.where(duration_seconds: nil)
-                              .or(channel.videos.where(views_count: nil))
-                              .or(channel.videos.where("updated_at < ?", 1.day.ago))
-                              .limit(500).to_a
+    # === УМНЫЙ АВТОПИЛОТ С ОПТИМИЗАЦИЕЙ КВОТ GOOGLE ===
+    # 1. Срочно собираем ролики без статистики (duration или views равны nil)
+    blank_videos = channel.videos.where(duration_seconds: nil).or(channel.videos.where(views_count: nil))
+
+    # 2. Собираем ГОРЯЧИЕ НОВИНКИ (вышли в последние 3 дня), которые не обновлялись более 3 часов
+    hot_news = channel.videos.where("published_at > ?", 3.days.ago).where("updated_at < ?", 3.hours.ago)
+
+    # 3. Собираем СТАРЫЙ АРХИВ, который не обновлялся больше 24 часов (берем понемногу, чтобы не тратить квоту)
+    old_archive = channel.videos.where("published_at <= ?", 3.days.ago).where("updated_at < ?", 24.hours.ago).limit(100)
+
+    # Объединяем всё в один фиксированный массив для обработки
+    videos_to_update = (blank_videos.to_a + hot_news.to_a + old_archive.to_a).uniq.first(500)
 
     if api_key.present? && videos_to_update.any?
       # .each_slice(50) берет по 50 видео за раз и крутит внутренний цикл
@@ -35,48 +40,40 @@ class FetchChannelVideosJob < ApplicationJob
               data["items"].each do |item|
                 v_id = item["id"]
 
-                # 1. Вытаскиваем реальную дату публикации с YouTube
-                real_date_str = item.dig("snippet", "publishedAt")
-                views = item.dig("statistics", "viewCount").to_i
-                likes = item.dig("statistics", "likeCount").to_i
+                snippet = item["snippet"]
+                content_details = item["contentDetails"]
+                statistics = item["statistics"]
+                live_details = item["liveStreamingDetails"]
 
-                # ОФИЦИАЛЬНЫЙ МАРКЕР СТРИМОВ ОТ GOOGLE: может быть 'live', 'upcoming', 'completed' или 'none'
-                live_status = item.dig("snippet", "liveBroadcastContent").to_s
+                real_date_str = snippet ? snippet["publishedAt"] : nil
+                views = statistics ? statistics["viewCount"].to_i : 0
+                likes = statistics ? statistics["likeCount"].to_i : 0
 
-                # 2. Вытаскиваем длительность ролика
-                iso_duration = item.dig("contentDetails", "duration")
-
+                # 1. СВЕРХТОЧНОЕ РАСПАРСИВАНИЕ ДЛИТЕЛЬНОСТИ В СЕКУНДЫ
                 seconds = 0
-                if iso_duration.present?
-                  match = iso_duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/)
-                  if match
-                    hours   = match[1].to_i
-                    minutes = match[2].to_i
-                    secs    = match[3].to_i
-                    seconds = (hours * 3600) + (minutes * 60) + secs
+                if content_details && content_details["duration"].present?
+                  begin
+                    seconds = ActiveSupport::Duration.parse(content_details["duration"]).to_i
+                  rescue
+                    seconds = 0
                   end
                 end
 
-                # ЖЕЛЕЗОБЕТОННЫЙ ГЕНЕТИЧЕСКИЙ ОТПЕЧАТОК YOUTUBE БЕЗ ГАДАНИЯ ПО СЛОВАМ
-                has_live_details = item["liveStreamingDetails"].present? # Блок существует ТОЛЬКО у стримов!
+                # 2. ЖЕЛЕЗОБЕТОННОЕ ОПРЕДЕЛЕНИЕ ТИПА КОНТЕНТА (НАШ НАДЁЖНЫЙ КРИТЕРИЙ)
+                description_text = snippet ? snippet["description"].to_s.downcase : ""
 
-                is_stream = live_status == "live" ||
-                            live_status == "upcoming" ||
-                            live_status == "completed" ||
-                            has_live_details || # Поймали архивный эфир по его истории вещания!
+                if live_details.present?
+                  # Если у видео физически есть блок liveStreamingDetails — это на 100% СТРИМ!
+                  detected_type = "stream"
+                elsif description_text.include?("#shorts") || (seconds > 0 && seconds <= 180)
+                  # Если есть тег или длительность до 3 минут (180 секунд) — это ШОРТС!
+                  detected_type = "shorts"
+                else
+                  # Во всех остальных случаях — обычное классическое видео
+                  detected_type = "video"
+                end
 
-                is_shorts = seconds > 0 && seconds <= 180 && !is_stream # Официальные 180 секунд для Shorts!
-
-                  # ИДЕАЛЬНАЯ ИЕРАРХИЯ: Сначала жестко отсекаем Shorts (до 3 минут),
-                  # и только потом проверяем стримы и длинные видео!
-                  if is_shorts
-                    detected_type = "shorts" # Шортсы Белковского теперь в идеальной безопасности!
-                  elsif is_stream
-                    detected_type = "stream"
-                  else
-                    detected_type = "video"
-                  end
-
+                # 3. ЗАПИСЬ ДАННЫХ В ЛОКАЛЬНУЮ БАЗУ
                 video = channel.videos.find_by(youtube_video_id: v_id)
                 if video
                   updates = {}
@@ -84,12 +81,10 @@ class FetchChannelVideosJob < ApplicationJob
                   updates[:published_at] = Time.parse(real_date_str) if real_date_str.present?
                   updates[:views_count] = views if views > 0
                   updates[:likes_count] = likes if likes > 0
-
-                  # НАМЕРТВО сохраняем определенный тип контента в базу данных!
                   updates[:video_type] = detected_type
 
                   video.update_columns(updates) if updates.any?
-                  Rails.logger.info "--> [API УСПЕХ] Синхронизированы данные и ТИП КОНТЕНТА (#{detected_type}) для: #{v_id}"
+                  Rails.logger.info "--> [API АВТОПИЛОТ] Синхронизированы данные и ТИП КОНТЕНТА (#{detected_type}) для: #{v_id}"
                 end
               end
             end
