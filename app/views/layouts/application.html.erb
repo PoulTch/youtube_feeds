@@ -14,12 +14,21 @@
   </head>
   <body data-controller="sidebar">
 
-    <!-- ПОЛНОЭКРАННАЯ ЗАВЕСА СИНХРОНИЗАЦИИ СИСТЕМЫ -->
-    <div id="system-loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; transition: opacity 0.3s ease;">
-      <!-- Стильный минималистичный спиннер а-ля YouTube -->
-      <div style="width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #0f0f0f; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px;"></div>
-      <h2 style="margin: 0 0 8px 0; font-size: 1.2rem; font-weight: bold; color: #0f0f0f;">Импорт подписок и синхронизация архивов...</h2>
-      <p style="margin: 0; font-size: 0.9rem; color: #606060;">Пожалуйста, не закрывайте вкладку. Система выстраивает идеальную хронологию.</p>
+    <!-- ПОЛНОЭКРАННАЯ ЗАВЕСА СИНХРОНИЗАЦИИ СИСТЕМЫ (С КЛАССАМИ ДЛЯ CSS) -->
+    <div id="system-loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(4px); z-index: 99999; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; transition: opacity 0.3s ease; padding: 24px; box-sizing: border-box;">
+      
+      <!-- Спиннер -->
+      <div style="width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #0f0f0f; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 20px; flex-shrink: 0;"></div>
+      
+      <!-- Заголовок -->
+      <h2 class="loading-overlay-title" style="margin: 0 0 10px 0; font-size: 1.25rem; font-weight: bold; color: #0f0f0f; text-align: center; line-height: 1.4;">
+        Импорт подписок и синхронизация архивов...
+      </h2>
+      
+      <!-- Подзаголовок -->
+      <p class="loading-overlay-text" style="margin: 0; font-size: 0.9rem; color: #606060; text-align: center; line-height: 1.5;">
+        Пожалуйста, не закрывайте вкладку. Система выстраивает идеальную хронологию.
+      </p>
     </div>
 
     <style>
