@@ -176,7 +176,7 @@ class VideosController < ApplicationController
     if @current_tab == "playlists"
       # === СЦЕНАРИЙ А: ВКЛАДКА ПЛЕЙЛИСТОВ (ТЕПЕРЬ СО СВЕРХСКОРОСТНОЙ ПАГИНАЦИЕЙ!) ===
       playlists_relation = @channel.playlists.order(id: :asc)
-      
+
       # Разбиваем плейлисты на легкие страницы по 24 штуки, чтобы страница открывалась мгновенно
       @pagy, @playlists = pagy(:offset, playlists_relation, page: current_page, limit: 24)
       @videos = [] # Пустая заглушка, так как ролики на этой вкладке не нужны
@@ -185,22 +185,22 @@ class VideosController < ApplicationController
       # Направление дат
       order_logic = if @current_sort == "asc"
                       { published_at: :asc, id: :asc }
-                    else
+      else
                       { published_at: :desc, id: :desc }
-                    end
+      end
 
       # Базовая связь строго этого автора
       base_relation = @channel.videos.order(order_logic)
 
       # УМНОЕ РАСПРЕДЕЛЕНИЕ: пускаем nil на главную вкладку 'video'
       videos_relation = case @current_tab
-                        when "shorts"
+      when "shorts"
                           base_relation.where(video_type: "shorts")
-                        when "stream"
+      when "stream"
                           base_relation.where(video_type: "stream")
-                        else
+      else
                           base_relation.where("video_type = 'video' OR video_type IS NULL")
-                        end
+      end
 
       # Подгружаем карточки плейлистов для сайдбара в легком режиме (без пагинации, просто массив)
       @playlists = @channel.playlists.order(id: :asc)
@@ -221,9 +221,9 @@ class VideosController < ApplicationController
     # 1. Задаем базовую выборку роликов с сортировкой
     playlist_videos_relation = if @current_sort == "asc"
                                  @playlist.videos.order(published_at: :asc, id: :asc)
-                               else
+    else
                                  @playlist.videos.order(published_at: :desc, id: :desc)
-                               end
+    end
 
     # 2. Определяем текущую страницу
     current_page = params[:page].to_i > 0 ? params[:page].to_i : 1
@@ -444,17 +444,20 @@ class VideosController < ApplicationController
                     end
                   end
 
-                  # === СВЕРХТОЧНОЕ РАСКИДЫВАНИЕ ПО ВКЛАДКАМ ===
+                  # === СВЕРХТОЧНОЕ РАСКИДЫВАНИЕ ПО ВКЛАДКАМ С АДМИН-ФЛАГОМ ===
                   description_text = snippet ? snippet["description"].to_s.downcase : ""
 
-                  if live_details.present?
-                    # Контур А: Если у видео физически есть блок liveStreamingDetails — это 100% СТРИМ!
+                  if db_v.is_premiere
+                    # ЖЕЛЕЗОБЕТОННЫЙ ЩИТ: Если админ вручную пометил видео как премьеру — только во вкладку Видео!
+                    db_v.video_type = "video"
+                  elsif live_details.present?
+                    # Контур А: Трансляции
                     db_v.video_type = "stream"
                   elsif description_text.include?("#shorts") || (secs > 0 && secs <= 180)
-                    # Контур Б: Если есть тег или длительность до 3 минут (180 сек) — это ШОРТС!
+                    # Контур Б: Shorts
                     db_v.video_type = "shorts"
                   else
-                    # Контур В: Во всех остальных случаях — это обычное классическое ВИДЕО
+                    # Контур В: Обычное классическое видео
                     db_v.video_type = "video"
                   end
 

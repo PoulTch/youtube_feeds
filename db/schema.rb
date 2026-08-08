@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_03_080403) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_07_184323) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -185,6 +185,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_03_080403) do
     t.string "video_type", default: "regular", null: false
     t.integer "views_count"
     t.integer "likes_count"
+    t.boolean "is_premiere", default: false
     t.index ["channel_id"], name: "index_videos_on_channel_id"
     t.index ["duration_seconds"], name: "index_videos_on_duration_seconds"
     t.index ["playlist_id"], name: "index_videos_on_playlist_id"

@@ -59,17 +59,17 @@ class FetchChannelVideosJob < ApplicationJob
                   end
                 end
 
-                # 2. ЖЕЛЕЗОБЕТОННОЕ ОПРЕДЕЛЕНИЕ ТИПА КОНТЕНТА (НАШ НАДЁЖНЫЙ КРИТЕРИЙ)
+                # 2. ЖЕЛЕЗОБЕТОННОЕ ОПРЕДЕЛЕНИЕ ТИПА КОНТЕНТА С АДМИН-ФЛАГОМ
                 description_text = snippet ? snippet["description"].to_s.downcase : ""
 
-                if live_details.present?
-                  # Если у видео физически есть блок liveStreamingDetails — это на 100% СТРИМ!
+                if video.is_premiere
+                  # Автопилот уважает ручную пометку админа и никогда не вернет влог в стримы
+                  detected_type = "video"
+                elsif live_details.present?
                   detected_type = "stream"
                 elsif description_text.include?("#shorts") || (seconds > 0 && seconds <= 180)
-                  # Если есть тег или длительность до 3 минут (180 секунд) — это ШОРТС!
                   detected_type = "shorts"
                 else
-                  # Во всех остальных случаях — обычное классическое видео
                   detected_type = "video"
                 end
 
